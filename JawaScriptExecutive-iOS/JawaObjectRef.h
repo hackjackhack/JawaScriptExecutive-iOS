@@ -17,9 +17,12 @@
 
 @interface JawaObjectRef : NSObject
 {
-    NSObject* object;
-    __weak JawaObjectRef* appliedOn;
+
 }
+
+@property (strong) NSObject* object;
+@property (weak) JawaObjectRef* appliedOn;
+
 -(id)init;
 -(id)initWithNumber:(double)number;
 -(id)initWithString:(NSString*)string;
@@ -28,8 +31,18 @@
 -(id)initWithJawaFunc:(JawaFunc*)func;
 -(id)initWithJawaFunc:(JawaFunc*)func on:(JawaObjectRef*)obj;
 -(id)initWithJawaObject:(JawaObject*)obj;
--(NSString*)toString;
+-(NSString*)description;
 -(id)transfer;
+
++(id)Ref;
++(id)RefWithNumber:(double)number;
++(id)RefWithString:(NSString*)string;
++(id)RefWithBoolean:(bool)tf;
++(id)RefWithJawaArray:(JawaArray*)array;
++(id)RefWithJawaFunc:(JawaFunc*)func;
++(id)RefWithJawaFunc:(JawaFunc*)func on:(JawaObjectRef*)obj;
++(id)RefWithJawaObject:(JawaObject*)obj;
+
 @end
 
 #endif /* JawaObjectRef_h */

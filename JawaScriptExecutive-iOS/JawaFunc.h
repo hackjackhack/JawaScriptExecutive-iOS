@@ -15,6 +15,7 @@
 {
     
 }
+@property int switchId;
 @end
 
 
