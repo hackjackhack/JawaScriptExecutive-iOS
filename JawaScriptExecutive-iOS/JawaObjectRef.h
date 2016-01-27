@@ -9,7 +9,7 @@
 #ifndef JawaObjectRef_h
 #define JawaObjectRef_h
 
-#define QUANTUM 0.0000000000000001
+#import "JawaExecutor.h"
 
 @class JawaArray;
 @class JawaFunc;
@@ -22,11 +22,12 @@
 
 @property (strong) NSObject* object;
 @property (weak) JawaObjectRef* appliedOn;
+@property (weak) JawaExecutor* executor;
 
--(id)init;
--(id)initWithNumber:(double)number;
--(id)initWithString:(NSString*)string;
--(id)initWithBoolean:(bool)tf;
+-(id)initIn:(JawaExecutor*)ex;
+-(id)initWithNumber:(double)number in:(JawaExecutor*)ex;
+-(id)initWithString:(NSString*)string in:(JawaExecutor*)ex;
+-(id)initWithBoolean:(bool)tf in:(JawaExecutor*)ex;
 -(id)initWithJawaArray:(JawaArray*)array;
 -(id)initWithJawaFunc:(JawaFunc*)func;
 -(id)initWithJawaFunc:(JawaFunc*)func on:(JawaObjectRef*)obj;
@@ -34,10 +35,10 @@
 -(NSString*)description;
 -(id)transfer;
 
-+(id)Ref;
-+(id)RefWithNumber:(double)number;
-+(id)RefWithString:(NSString*)string;
-+(id)RefWithBoolean:(bool)tf;
++(id)RefIn:(JawaExecutor*)ex;
++(id)RefWithNumber:(double)number in:(JawaExecutor*)ex;
++(id)RefWithString:(NSString*)string in:(JawaExecutor*)ex;
++(id)RefWithBoolean:(bool)tf in:(JawaExecutor*)ex;
 +(id)RefWithJawaArray:(JawaArray*)array;
 +(id)RefWithJawaFunc:(JawaFunc*)func;
 +(id)RefWithJawaFunc:(JawaFunc*)func on:(JawaObjectRef*)obj;

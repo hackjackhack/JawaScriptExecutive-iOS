@@ -10,12 +10,23 @@
 #define JawaFunc_h
 
 #import "JawaObject.h"
+#import "JawaObjectProtected.h"
 
 @interface JawaFunc : JawaObject
 {
     
 }
+@property NSString* name;
+@property NSDictionary* body;
+@property NSArray* params;
+@property BOOL isBuiltIn;
+@property BOOL isPropertyWrapper;
 @property int switchId;
+
+-(id)initWithName:(NSString*)name in:(JawaExecutor*)ex taking:(NSArray*)params is:(BOOL)builtin is:(BOOL)propertyWrapper and:(NSDictionary*)body;
+-(JawaObjectRef*)apply:(JawaObjectRef*)on;
+-(JawaObjectRef*)apply;
+-(NSString*)description;
 @end
 
 

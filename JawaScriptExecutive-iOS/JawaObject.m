@@ -14,10 +14,19 @@ NSMutableDictionary* objectPrototype;
 
 @implementation JawaObject
 
--(id) init {
++(void)initialize {
+    if (self == [JawaObject class]) {
+        objectPrototype = [[NSMutableDictionary alloc]init];
+    }
+}
+
+-(id) initIn:(JawaExecutor *)ex {
     self = [super init];
-    _properties = [[NSMutableDictionary alloc] init];
-    _prototype = objectPrototype;
+    if (self) {
+        _properties = [[NSMutableDictionary alloc] init];
+        _prototype = objectPrototype;
+        _executor = ex;
+    }
     return self;
 }
 
@@ -45,20 +54,20 @@ NSMutableDictionary* objectPrototype;
 -(JawaObjectRef*)invokeBuiltin:(NSString*)funcName {
     int ID = [self getBuiltinID:funcName];
     switch(ID) {
-            // toJSON()
+        // toJSON()
         case 0: {
-            return [JawaObjectRef RefWithString:[self toJSON:nil]];
+            return [JawaObjectRef RefWithString:[self toJSON:nil] in:self.executor];
         }
     }
     return nil;
 }
 
 -(NSString*) description {
-    return [NSString stringWithFormat:@""];
+    return @"";
 }
 
--(NSString*) toJSON:(NSMutableString*)ret {
-    return [NSString stringWithFormat:@""];
+-(NSMutableString*) toJSON:(NSMutableString*)ret {
+    return [NSMutableString stringWithFormat: @""];
 }
 
 @end

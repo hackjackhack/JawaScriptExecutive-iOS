@@ -19,14 +19,16 @@ extern NSMutableDictionary* objectPrototype;
 }
 @property (strong) NSMutableDictionary* properties;
 @property (strong) NSMutableDictionary* prototype;
+@property (weak) JawaExecutor* executor;
 
--(id) init;
--(void) setProp:(NSString*)key with:(JawaObjectRef*)value;
++(void)initialize;
+-(id)initIn:(JawaExecutor*)ex;
+-(void)setProp:(NSString*)key with:(JawaObjectRef*)value;
 -(JawaObjectRef*) getProp:(NSString*)key;
 -(int)getBuiltinID:(NSString*)funcName;
 -(JawaObjectRef*)invokeBuiltin:(NSString*)funcName;
 -(NSString*)description;
--(NSString*) toJSON:(NSMutableString*)ret;
+-(NSMutableString*) toJSON:(NSMutableString*)ret;
 @end
 
 #endif /* JawaObject_h */

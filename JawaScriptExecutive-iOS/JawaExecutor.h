@@ -6,10 +6,19 @@
 //
 //
 
-#ifndef Executor_h
-#define Executor_h
+#ifndef JawaExecutor_h
+#define JawaExecutor_h
 
-#define QUANTUM 0.0000000000000001;
+@class JawaObjectRef;
+
+@interface JawaExecutor : NSObject
+@property NSMutableArray* currentActivation;
+
+-(JawaObjectRef*)evaluate:(NSDictionary*)tree;
+-(JawaObjectRef*)dispatchBuiltin:(NSString*)funcName;
+@end
+
+#define QUANTUM 0.0000000000000001
 
 typedef NS_ENUM(NSInteger, ASTType) {
     SCRIPT_BODY = 0,
@@ -104,4 +113,4 @@ typedef NS_ENUM(NSInteger, PropType) {
     PR_declarations,
 };
 
-#endif /* Executor_h */
+#endif /* JawaExecutor_h */

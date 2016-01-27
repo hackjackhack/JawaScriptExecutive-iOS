@@ -7,64 +7,87 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "JawaExecutor.h"
 #import "JawaArray.h"
 #import "JawaFunc.h"
 #import "JawaObjectRef.h"
 
 @implementation JawaObjectRef
 
--(id)init { self = [super init]; _object = NULL; return self; }
--(id)initWithNumber:(double)number {
+-(id)initIn:(JawaExecutor*)ex {
+    self = [super init];
+    if (self) {
+        _object = NULL;
+        _executor = ex;
+    }
+    return self;
+}
+
+-(id)initWithNumber:(double)number in:(JawaExecutor*)ex {
     self = [super init];
     if (self) {
         _object = [NSDecimalNumber numberWithDouble:number];
+        _executor = ex;
     }
     return self;
 }
--(id)initWithString:(NSString*)string {
+
+-(id)initWithString:(NSString*)string in:(JawaExecutor*)ex {
     self = [super init];
     if (self) {
         _object = [NSMutableString stringWithString:string];
+        _executor = ex;
     }
     return self;
 }
--(id)initWithBoolean:(bool)tf {
+
+-(id)initWithBoolean:(bool)tf in:(JawaExecutor*)ex {
     self = [super init];
     if (self) {
         _object = [NSNumber numberWithBool:tf];
+        _executor = ex;
     }
     return self;
 }
+
 -(id)initWithJawaArray:(JawaArray*)array {
     self = [super init];
     if (self) {
         _object = array;
+        _executor = array.executor;
     }
     return self;
 }
+
 -(id)initWithJawaFunc:(JawaFunc*)func {
     self = [super init];
     if (self) {
         _object = func;
         _appliedOn = nil;
+        _executor = func.executor;
     }
     return self;
 }
+
 -(id)initWithJawaFunc:(JawaFunc*)func on:(JawaObjectRef*)obj {
     self = [super init];
     if (self) {
         _object = func;
         _appliedOn = obj;
+        _executor = func.executor;
     }
     return self;
 }
+
 -(id)initWithJawaObject:(JawaObject*)obj {
     self = [super init];
     if (self) {
         _object = obj;
+        _executor = obj.executor;
     }
     return self;
 }
+
 -(NSString*)description {
     if ([self.object isMemberOfClass: [NSDecimalNumber class]]) {
         double n = ((NSDecimalNumber*)self.object).doubleValue;
@@ -91,17 +114,17 @@
         return self.object;
 }
 
-+(id)Ref {
-    return [[self alloc] init];
++(id)RefIn:(JawaExecutor *)ex {
+    return [[self alloc] initIn:ex];
 }
-+(id)RefWithNumber:(double)number {
-    return [[self alloc] initWithNumber:number];
++(id)RefWithNumber:(double)number in:(JawaExecutor*)ex {
+    return [[self alloc] initWithNumber:number in:ex];
 }
-+(id)RefWithString:(NSString*)string {
-    return [[self alloc] initWithString:string];
++(id)RefWithString:(NSString*)string in:(JawaExecutor*)ex {
+    return [[self alloc] initWithString:string in:ex];
 }
-+(id)RefWithBoolean:(bool)tf {
-    return [[self alloc] initWithBoolean:tf];
++(id)RefWithBoolean:(bool)tf in:(JawaExecutor*)ex {
+    return [[self alloc] initWithBoolean:tf in:ex];
 }
 +(id)RefWithJawaArray:(JawaArray*)array {
     return [[self alloc] initWithJawaArray:array];

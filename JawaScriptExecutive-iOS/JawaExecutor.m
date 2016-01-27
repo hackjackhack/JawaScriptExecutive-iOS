@@ -7,11 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "Executor.h"
+#import "JawaExecutor.h"
 
-@interface Executor : NSObject
 
-@end
 
 int main(int argc, char *argv[]) {
     return 0;

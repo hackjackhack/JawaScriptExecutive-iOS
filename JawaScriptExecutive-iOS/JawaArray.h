@@ -11,10 +11,23 @@
 
 #import "JawaObject.h"
 
+extern NSMutableDictionary* arrayPrototype;
+
 @interface JawaArray : JawaObject
 {
     
 }
+@property NSMutableArray* elements;
+
++(void) initialize;
+-(id) initIn:(JawaExecutor *)ex;
+-(NSString*) description;
+-(NSMutableString*) toJSON:(NSMutableString *)ret;
+-(void)append:(JawaObjectRef*)element;
+-(JawaObjectRef*)at:(int)index;
+-(JawaObjectRef*)invokeBuiltin:(NSString*)funcName;
+
+
 @end
 
 
