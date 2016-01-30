@@ -39,7 +39,9 @@ NSMutableDictionary* arrayPrototype;
 }
 
 -(void)append:(JawaObjectRef*)element {
-    [self.elements addObject:element];
+    // Need weak references stored in NSArray.
+    NSValue* weakRef = [NSValue valueWithNonretainedObject:element];
+    [self.elements addObject:weakRef];
 }
 
 -(JawaObjectRef*)at:(int)index {

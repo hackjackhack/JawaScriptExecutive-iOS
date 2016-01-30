@@ -12,9 +12,17 @@
 @class JawaObjectRef;
 
 @interface JawaExecutor : NSObject
+@property (weak) NSMutableDictionary* env;
+@property NSMutableDictionary* global;
+@property NSMutableArray* activations;
 @property NSMutableArray* currentActivation;
+@property NSMutableDictionary* currentIterationScope;
+@property BOOL isFromCallExpression;
 
+-(id)init;
 -(JawaObjectRef*)evaluate:(NSDictionary*)tree;
+-(void)execute:(NSDictionary*)ast;
+-(NSMutableDictionary*) invoke:(NSString*)funcName with:(NSMutableDictionary*)asInput;
 -(JawaObjectRef*)dispatchBuiltin:(NSString*)funcName;
 @end
 
@@ -37,7 +45,7 @@ typedef NS_ENUM(NSInteger, ASTType) {
     AND_EXPRESSION,
     EQUALITY_EXPRESSION,
     RELATIONAL_EXPRESSION,
-    IN_EXPRESSINO,
+    IN_EXPRESSION,
     
     SHIFT_EXPRESSION,
     ADDITIVE_EXPRESSION,
@@ -70,8 +78,13 @@ typedef NS_ENUM(NSInteger, ASTType) {
     OBJECT_PROPERTY,
 };
 
+#define PR_statements @"0"
+#define PR_elements @"7"
+#define PR_varName @"26"
+#define PR_initialization @"27"
+#define PR_declarations @"33"
+
 typedef NS_ENUM(NSInteger, PropType) {
-    PR_statements = 0,
     PR_valueType,
     PR_arguments,
     PR_id,
@@ -79,7 +92,7 @@ typedef NS_ENUM(NSInteger, PropType) {
     
     PR_expr,
     PR_properties,
-    PR_elements,
+    
     PR_literal,
     PR_constructor,
     
@@ -102,15 +115,15 @@ typedef NS_ENUM(NSInteger, PropType) {
     PR_body,
     
     PR_test,
-    PR_varName,
-    PR_initialization,
+    
+    
     PR_iterable,
     PR_iterator,
     
     PR_init,
     PR_update,
     PR_argument,
-    PR_declarations,
+    
 };
 
 #endif /* JawaExecutor_h */
