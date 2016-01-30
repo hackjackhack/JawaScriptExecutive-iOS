@@ -79,7 +79,12 @@ typedef NS_ENUM(NSInteger, ASTType) {
 };
 
 #define PR_statements @"0"
+#define PR_id @"3"
+
 #define PR_elements @"7"
+#define PR_literal @"8"
+#define PR_params @"23"
+#define PR_body @"24"
 #define PR_varName @"26"
 #define PR_initialization @"27"
 #define PR_declarations @"33"
@@ -87,13 +92,13 @@ typedef NS_ENUM(NSInteger, ASTType) {
 typedef NS_ENUM(NSInteger, PropType) {
     PR_valueType,
     PR_arguments,
-    PR_id,
+    
     PR_key,
     
     PR_expr,
     PR_properties,
     
-    PR_literal,
+    
     PR_constructor,
     
     PR_object,
@@ -111,8 +116,8 @@ typedef NS_ENUM(NSInteger, PropType) {
     PR_left,
     PR_right,
     PR_expressions,
-    PR_params,
-    PR_body,
+
+    
     
     PR_test,
     

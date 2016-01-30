@@ -100,6 +100,20 @@
         [currentScope setValue:value forKey:name];
 }
 
+-(JawaObjectRef*)declareFunction:(NSDictionary*)ast {
+    printf("Running FUNCTION_DECLARATION\n");
+    NSString *name = (NSString*)[ast objectForKey:PR_id];
+    NSArray *params = (NSArray*)[ast objectForKey:PR_params];
+    NSMutableArray *paramStrs = [[NSMutableArray alloc]init];
+    for (NSString* paramStr in params) {
+        [paramStrs addObject:paramStr];
+    }
+    NSDictionary* body = (NSDictionary*)[ast objectForKey:PR_body];
+    JawaFunc* func = [[JawaFunc alloc]initWithName:name in:self taking:paramStrs is:false is:false and:body];
+    [self declare:name with:[JawaObjectRef RefWithJawaFunc:func]];
+    return nil;
+}
+
 -(JawaObjectRef*)declareVar:(NSDictionary*)ast {
     printf("Running VARIABLE_DECLARATION\n");
     NSString* name = (NSString*)[ast objectForKey:PR_varName];
@@ -122,12 +136,56 @@
     return nil;
 }
 
+-(JawaObjectRef*)evalBlockStatement:(NSDictionary*)ast {
+    printf("Running BLOCK_STATEMENT\n");
+    BOOL oldIsFromCallExpression = self.isFromCallExpression;
+    if (!self.isFromCallExpression) {
+        // Create a new scope
+        [self.currentActivation addObject:[[NSDictionary alloc]init]];
+    }
+    self.isFromCallExpression = false;
+    NSArray* statements = [ast objectForKey:PR_statements];
+    for (NSDictionary* statement in statements) {
+        [self evaluate:statement];
+        if ([[self.currentActivation objectAtIndex:0] objectForKey:@"return"] != nil) {
+            break;
+        }
+        if (self.currentIterationScope != nil &&
+            ([self.currentIterationScope objectForKey:@"break"] != nil ||
+             [self.currentIterationScope objectForKey:@"continue"] != nil))
+            break;
+    }
+    self.isFromCallExpression = oldIsFromCallExpression;
+    if (!self.isFromCallExpression)
+        [self.currentActivation removeLastObject];
+    return nil;
+}
+
 -(JawaObjectRef*)evalScriptBody:(NSDictionary*)ast {
     printf("Running SCRIPT_BODY\n");
     NSArray* statements = (NSArray*)[ast objectForKey:PR_statements];
     for (NSDictionary* statement in statements) {
         [self evaluate:statement];
     }
+    return nil;
+}
+
+-(JawaObjectRef*)evalLiteral:(NSDictionary*)ast {
+    printf("Running LITERAL\n");
+    NSString* literal = [ast objectForKey:PR_literal];
+    NSUInteger sp = [literal rangeOfString:@","].location;
+    NSString* type = [literal substringWithRange:NSMakeRange(0, sp)];
+    NSString* content = [literal substringFromIndex:sp + 1];
+    if ([type isEqualToString:@"STRING_LITERAL"])
+        return [JawaObjectRef RefWithString:content in:self];
+    else if ([type isEqualToString:@"NUMERIC_LITERAL"])
+        return [JawaObjectRef RefWithNumber:[content doubleValue] in:self];
+    else if ([type isEqualToString:@"BOOLEAN"])
+        return [JawaObjectRef RefWithBoolean:[content boolValue] in:self];
+    else if ([type isEqualToString:@"NULL"])
+        return [JawaObjectRef RefIn:self];
+    else
+        [NSException raise:@"Unknown literal type" format:@"%@", literal];
     return nil;
 }
 
@@ -139,9 +197,9 @@
         case SCRIPT_BODY:
             return [self evalScriptBody:tree];
         case FUNCTION_DECLARATION:
-            break;
+            return [self declareFunction:tree];
         case BLOCK_STATEMENT:
-            break;
+            return [self evalBlockStatement:tree];
         case EMPTY_STATEMENT:
             break;
         case SEQUENCE_EXPRESSION:
@@ -207,7 +265,7 @@
         case VARIABLE_DECLARATION:
             return [self declareVar:tree];
         case LITERAL:
-            break;
+            return [self evalLiteral:tree];
         default:
             break;
     }
