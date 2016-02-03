@@ -21,9 +21,9 @@
 @property NSArray* params;
 @property BOOL isBuiltIn;
 @property BOOL isPropertyWrapper;
-@property int switchId;
+@property NSUInteger switchId;
 
--(id)initWithName:(NSString*)name in:(JawaExecutor*)ex taking:(NSArray*)params is:(BOOL)builtin is:(BOOL)propertyWrapper and:(NSDictionary*)body;
+-(id)initWithName:(NSString*)name in:(JawaExecutor*)ex taking:(NSArray*)params isBuiltin:(BOOL)builtin isPropertyWrapper:(BOOL)propertyWrapper and:(NSDictionary*)body;
 -(JawaObjectRef*)apply:(JawaObjectRef*)on;
 -(JawaObjectRef*)apply;
 -(NSString*)description;

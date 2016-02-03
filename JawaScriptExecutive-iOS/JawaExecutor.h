@@ -79,19 +79,33 @@ typedef NS_ENUM(NSInteger, ASTType) {
 };
 
 #define PR_statements @"0"
+#define PR_arguments @"2"
 #define PR_id @"3"
 
 #define PR_elements @"7"
 #define PR_literal @"8"
+#define PR_object @"10"
+#define PR_property @"11"
+#define PR_function @"12"
+#define PR_ops @"15"
+#define PR_subExpressions @"16"
+#define PR_onTrue @"18"
+#define PR_onFalse @"19"
 #define PR_params @"23"
 #define PR_body @"24"
+#define PR_test @"25"
 #define PR_varName @"26"
 #define PR_initialization @"27"
+#define PR_iterable @"28"
+#define PR_iterator @"29"
+#define PR_init @"30"
+#define PR_update @"31"
+#define PR_argument @"32"
 #define PR_declarations @"33"
 
 typedef NS_ENUM(NSInteger, PropType) {
     PR_valueType,
-    PR_arguments,
+    
     
     PR_key,
     
@@ -101,17 +115,14 @@ typedef NS_ENUM(NSInteger, PropType) {
     
     PR_constructor,
     
-    PR_object,
-    PR_property,
-    PR_function,
+    
+    
     PR_subExpression,
     PR_op,
     
-    PR_ops,
-    PR_subExpressions,
+    
     PR_condition,
-    PR_onTrue,
-    PR_onFalse,
+    
     
     PR_left,
     PR_right,
@@ -119,15 +130,15 @@ typedef NS_ENUM(NSInteger, PropType) {
 
     
     
-    PR_test,
     
     
-    PR_iterable,
-    PR_iterator,
     
-    PR_init,
-    PR_update,
-    PR_argument,
+    
+    
+    
+    
+    
+    
     
 };
 

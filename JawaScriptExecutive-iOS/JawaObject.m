@@ -14,12 +14,6 @@ NSMutableDictionary* objectPrototype;
 
 @implementation JawaObject
 
-+(void)initialize {
-    if (self == [JawaObject class]) {
-        objectPrototype = [[NSMutableDictionary alloc]init];
-    }
-}
-
 -(id) initIn:(JawaExecutor *)ex {
     self = [super init];
     if (self) {
@@ -45,14 +39,14 @@ NSMutableDictionary* objectPrototype;
     return nil;
 }
 
--(int)getBuiltinID:(NSString*)funcName {
+-(NSUInteger)getBuiltinID:(NSString*)funcName {
     NSObject* v = [self.prototype objectForKey:funcName];
     if (v != nil) return ((JawaFunc*)v).switchId;
-    return -1;
+    return 0xFFFFFFFF;
 }
 
 -(JawaObjectRef*)invokeBuiltin:(NSString*)funcName {
-    int ID = [self getBuiltinID:funcName];
+    NSUInteger ID = [self getBuiltinID:funcName];
     switch(ID) {
         // toJSON()
         case 0: {
@@ -63,11 +57,51 @@ NSMutableDictionary* objectPrototype;
 }
 
 -(NSString*) description {
-    return @"";
+    NSMutableString* ret = [NSMutableString stringWithString:@"{"];
+    BOOL first = true;
+    for (NSString* key in self.properties) {
+        if (!first)
+            [ret appendString:@","];
+        first = false;
+        [ret appendString:key];
+        [ret appendString:@":"];
+        JawaObjectRef* value = [self.properties objectForKey:key];
+        if ([value.object isMemberOfClass:[NSMutableString class]]) {
+            [ret appendString:@"'"];
+            [ret appendString:[value description]];
+            [ret appendString:@"'"];
+        } else
+            [ret appendString:[value description]];
+    }
+    [ret appendString:@"}"];
+    return ret;
 }
 
 -(NSMutableString*) toJSON:(NSMutableString*)ret {
-    return [NSMutableString stringWithFormat: @""];
+    if (ret == nil)
+        ret = [NSMutableString stringWithString:@""];
+    [ret appendString:@"{"];
+    BOOL first = true;
+    for (NSString* key in self.properties) {
+        if (!first)
+            [ret appendString:@","];
+        first = false;
+        [ret appendString:@"\""];
+        [ret appendString:key];
+        [ret appendString:@"\":"];
+        JawaObjectRef* value = [self.properties objectForKey:key];
+        if ([value.object isMemberOfClass:[NSMutableString class]]) {
+            [ret appendString:@"\""];
+            NSString* r = [[value description] stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+            [ret appendString:r];
+            [ret appendString:@"\""];
+        } else if ([value.object isKindOfClass:[JawaObject class]]) {
+            [(JawaObject*)value.object toJSON:ret];
+        } else
+            [ret appendString:[value description]];
+    }
+    [ret appendString:@"}"];
+    return ret;
 }
 
 @end

@@ -12,7 +12,7 @@
 
 @implementation JawaFunc
 
--(id)initWithName:(NSString*)name in:(JawaExecutor*)ex taking:(NSArray*)params is:(BOOL)builtin is:(BOOL)propertyWrapper and:(NSDictionary*)body {
+-(id)initWithName:(NSString*)name in:(JawaExecutor*)ex taking:(NSArray*)params isBuiltin:(BOOL)builtin isPropertyWrapper:(BOOL)propertyWrapper and:(NSDictionary*)body {
     self = [super init];
     if (self) {
         _name = name;

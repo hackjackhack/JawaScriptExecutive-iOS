@@ -19,7 +19,6 @@ extern NSMutableDictionary* arrayPrototype;
 }
 @property NSMutableArray* elements;
 
-+(void) initialize;
 -(id) initIn:(JawaExecutor *)ex;
 -(NSString*) description;
 -(NSMutableString*) toJSON:(NSMutableString *)ret;
