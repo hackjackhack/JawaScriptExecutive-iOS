@@ -15,6 +15,8 @@
 @class JawaFunc;
 @class JawaObject;
 
+extern NSMutableArray* jawaObjectPool;
+
 @interface JawaObjectRef : NSObject
 {
 
@@ -34,6 +36,7 @@
 -(id)initWithJawaObject:(JawaObject*)obj;
 -(NSString*)description;
 -(id)transfer;
+-(void)dealloc;
 
 +(id)RefIn:(JawaExecutor*)ex;
 +(id)RefWithNumber:(double)number in:(JawaExecutor*)ex;

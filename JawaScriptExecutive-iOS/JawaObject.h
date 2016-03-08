@@ -17,7 +17,7 @@ extern NSMutableDictionary* objectPrototype;
 {
 
 }
-@property (strong) NSMutableDictionary* properties;
+@property (strong) NSMapTable* properties;
 @property (strong) NSMutableDictionary* prototype;
 @property (weak) JawaExecutor* executor;
 

@@ -17,7 +17,7 @@ NSMutableDictionary* objectPrototype;
 -(id) initIn:(JawaExecutor *)ex {
     self = [super init];
     if (self) {
-        _properties = [[NSMutableDictionary alloc] init];
+        _properties = [NSMapTable strongToWeakObjectsMapTable];
         _prototype = objectPrototype;
         _executor = ex;
     }

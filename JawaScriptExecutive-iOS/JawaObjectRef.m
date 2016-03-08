@@ -12,6 +12,8 @@
 #import "JawaFunc.h"
 #import "JawaObjectRef.h"
 
+NSMutableArray* jawaObjectPool;
+
 @implementation JawaObjectRef
 
 -(id)initIn:(JawaExecutor*)ex {
@@ -19,6 +21,7 @@
     if (self) {
         _object = NULL;
         _executor = ex;
+        [jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -28,6 +31,7 @@
     if (self) {
         _object = [NSDecimalNumber numberWithDouble:number];
         _executor = ex;
+        [jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -37,6 +41,7 @@
     if (self) {
         _object = [NSMutableString stringWithString:string];
         _executor = ex;
+        [jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -46,6 +51,7 @@
     if (self) {
         _object = [NSNumber numberWithBool:tf];
         _executor = ex;
+        [jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -55,6 +61,7 @@
     if (self) {
         _object = array;
         _executor = array.executor;
+        [jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -65,6 +72,7 @@
         _object = func;
         _appliedOn = nil;
         _executor = func.executor;
+        [jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -75,6 +83,7 @@
         _object = func;
         _appliedOn = obj;
         _executor = func.executor;
+        [jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -84,6 +93,7 @@
     if (self) {
         _object = obj;
         _executor = obj.executor;
+        [jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -112,6 +122,9 @@
         return [((NSMutableString*)self.object) mutableCopy];
     } else
         return self.object;
+}
+-(void)dealloc {
+    printf("Releasing %s\n", [[self description]cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 +(id)RefIn:(JawaExecutor *)ex {

@@ -17,7 +17,7 @@ extern NSMutableDictionary* arrayPrototype;
 {
     
 }
-@property NSMutableArray* elements;
+@property NSPointerArray* elements;
 
 -(id) initIn:(JawaExecutor *)ex;
 -(NSString*) description;

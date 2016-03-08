@@ -11,7 +11,7 @@
 
 @interface JawaObject () {
     @protected
-    NSMutableDictionary* _properties;
+    NSMapTable* _properties;
     NSMutableDictionary* _prototype;
     __weak JawaExecutor* _executor;
 }

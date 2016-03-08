@@ -18,7 +18,7 @@ NSMutableDictionary* arrayPrototype;
     self = [super init];
     if (self) {
         _prototype = arrayPrototype;
-        _elements = [[NSMutableArray alloc]init];
+        _elements = [NSPointerArray weakObjectsPointerArray];
         _executor = ex;
     }
     return self;
@@ -61,15 +61,15 @@ NSMutableDictionary* arrayPrototype;
 }
 
 -(void)append:(JawaObjectRef*)element {
-    // Need weak references stored in NSArray.
-    NSValue* weakRef = [NSValue valueWithNonretainedObject:element];
-    [self.elements addObject:weakRef];
+    // Need weak references (raw pointer) stored in the array.
+    [self.elements addPointer:(__bridge void * _Nullable)(element)];
+    //printf("count : %ld", CFGetRetainCount((__bridge CFTypeRef)element));
 }
 
 -(JawaObjectRef*)at:(int)index {
     if (index < 0 || index >= [self.elements count])
         return nil;
-    return [self.elements objectAtIndex:index];
+    return [self.elements pointerAtIndex:index];
 }
 
 -(JawaObjectRef*)invokeBuiltin:(NSString*)funcName {

@@ -28,6 +28,8 @@
         _isFromCallExpression = false;
         // TODO: Add externalCallback
         
+        jawaObjectPool = [[NSMutableArray alloc]init];
+        
         arrayPrototype = [[NSMutableDictionary alloc]init];
         stringPrototype = [[NSMutableDictionary alloc]init];
         objectPrototype = [[NSMutableDictionary alloc]init];
@@ -87,6 +89,116 @@
     }
     
     return retJSON;
+}
+
+-(JawaObjectRef*)evalAssignmentExpression:(NSDictionary*)ast {
+    printf("Running ASSIGNMENT_EXPRESSION");
+    JawaObjectRef* left = [self evaluate:[ast objectForKey:PR_left]];
+    NSString* op = [[[ast  objectForKey:PR_op]componentsSeparatedByString:@","]objectAtIndex:1];
+    JawaObjectRef* right = [self evaluate:[ast objectForKey:PR_right]];
+    
+    if ([op isEqualToString:@"="]) {
+        if (left != nil) {
+            left.object = right != nil ? [right transfer] : nil;
+            return left;
+        } else {
+            NSDictionary* leftExpr = [ast objectForKey:PR_left];
+            JawaObjectRef* obj = [self evaluate:[leftExpr objectForKey:PR_object]];
+            if (obj != nil) {
+                int t = ((NSNumber*)[leftExpr objectForKey:@"t"]).intValue;
+                if (t == STATIC_MEMBER_EXPRESSION) {
+                    if ([obj.object isMemberOfClass:[JawaObject class]]) {
+                        NSString* property = [[leftExpr objectForKey:PR_property]objectForKey:PR_id];
+                        [(JawaObject*)obj.object setProp:property with:right];
+                        return right;
+                    }
+                } else if (t == COMPUTED_MEMBER_EXPRESSION) {
+                    if ([obj.object isMemberOfClass:[JawaObject class]]) {
+                        JawaObjectRef* computed = [self evaluate:[leftExpr objectForKey:PR_property]];
+                        if (computed == nil)
+                            [NSException raise:@"JawaScript Runtime Exception" format:@"Computed member for object is null"];
+                        NSString* property = [computed description];
+                        [(JawaObject*)obj.object setProp:property with:right];
+                        return right;
+                    }
+                }
+            }
+        }
+        [NSException raise:@"JawaScript Runtime Exception" format:@"Left operand of = is null."];
+    } else if ([op isEqualToString:@"+="]) {
+        if (left == nil)
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Left operand of += is null"];
+        if (right == nil)
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Right operand of += is null"];
+        if ([left.object isMemberOfClass:[NSMutableString class]]) {
+            NSMutableString* l = [NSMutableString stringWithString:[left.object description]];
+            NSString* r = [right description];
+            [l appendString:r];
+            left.object = [JawaObjectRef RefWithString:l in:self];
+        } else if ([left.object isMemberOfClass:[NSDecimalNumber class]] &&
+                   [right.object isMemberOfClass:[NSDecimalNumber class]]) {
+            double l = ((NSDecimalNumber*)left.object).doubleValue;
+            double r = ((NSDecimalNumber*)right.object).doubleValue;
+            left.object = [JawaObjectRef RefWithNumber:l + r in:self];
+        } else {
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for +="];
+        }
+    } else if ([op isEqualToString:@"-="] ||
+               [op isEqualToString:@"*="] ||
+               [op isEqualToString:@"/="] ||
+               [op isEqualToString:@"%="]) {
+        if (left == nil)
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Left operand of assignment is null"];
+        if (right == nil)
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Right operand of assignment is null"];
+        if ([left.object isMemberOfClass:[NSDecimalNumber class]] &&
+            [right.object isMemberOfClass:[NSDecimalNumber class]]) {
+            double l = ((NSDecimalNumber*)left.object).doubleValue;
+            double r = ((NSDecimalNumber*)right.object).doubleValue;
+            unsigned char c = [op characterAtIndex:0];
+            switch (c) {
+                case '-':
+                    left.object = [JawaObjectRef RefWithNumber:l - r in:self];
+                    break;
+                case '*':
+                    left.object = [JawaObjectRef RefWithNumber:l * r in:self];
+                    break;
+                case '/':
+                    left.object = [JawaObjectRef RefWithNumber:l / r in:self];
+                    break;
+                case '%':
+                    left.object = [JawaObjectRef RefWithNumber:(long)l % (long)r in:self];
+                    break;
+            }
+        } else {
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for assignment"];
+        }
+    } else if ([op isEqualToString:@"|="] ||
+               [op isEqualToString:@"&="]) {
+        if (left == nil)
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Left operand of |=,&= is null"];
+        if (right == nil)
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Right operand of |=,&= is null"];
+        if ([left.object isMemberOfClass:[NSDecimalNumber class]] &&
+            [right.object isMemberOfClass:[NSDecimalNumber class]]) {
+            long long l = ((NSDecimalNumber*)left.object).longLongValue;
+            long long r = ((NSDecimalNumber*)right.object).longLongValue;
+            unsigned char c = [op characterAtIndex:0];
+            switch (c) {
+                case '&':
+                    left.object = [JawaObjectRef RefWithNumber:l & r in:self];
+                    break;
+                case '|':
+                    left.object = [JawaObjectRef RefWithNumber:l | r in:self];
+                    break;
+            }
+        } else {
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for &=, |="];
+        }
+    } else {
+        [NSException raise:@"JawaScript Runtime Exception" format:@"%@ not implemented yet", op];
+    }
+    return nil;
 }
 
 -(JawaObjectRef*)evalStaticMemberExpression:(NSDictionary*)ast {
@@ -575,7 +687,7 @@
         case SEQUENCE_EXPRESSION:
             break;
         case ASSIGNMENT_EXPRESSION:
-            break;
+            return [self evalAssignmentExpression:tree];
         case CONDITIONAL_EXPRESSION:
             break;
         case LOGICAL_OR_EXPRESSION:
