@@ -119,6 +119,171 @@ NSMutableDictionary* builtinFunctions;
     return retJSON;
 }
 
+-(int)toInteger:(JawaObjectRef*)o {
+    if ([o.object isMemberOfClass:[NSDecimalNumber class]]) {
+        double d = ((NSDecimalNumber*)o.object).doubleValue;
+        int magnitude = (int)(long)floor(fabs(d));
+        int sign = d >= 0 ? 1 : -1;
+        return magnitude * sign;
+    }
+    [NSException raise:@"JawaScript Runtime Exception" format:@"Not yet implemented conversion"];
+    return -1;
+}
+
+-(JawaObjectRef*)evalInExpression:(NSDictionary*)ast {
+    return nil;
+}
+
+-(JawaObjectRef*)evalUnaryExpression:(NSDictionary*)ast {
+    NSString* op = [[((NSString*)[ast objectForKey:PR_op]) componentsSeparatedByString:@","]objectAtIndex:1];
+    JawaObjectRef* subExpression = [self evaluate:[ast objectForKey:PR_subExpression]];
+    if (subExpression == nil)
+        [NSException raise:@"JawaScript Runtime Exception" format:@"Unary op cannot be applied to null"];
+    if ([op isEqualToString:@"++"] || [op isEqualToString:@"--"]) {
+        if (![subExpression.object isMemberOfClass:[NSDecimalNumber class]])
+            [NSException raise:@"JawaScript Runtime Exception" format:@"++ and -- only apply to numbers"];
+        double d = ((NSDecimalNumber*)subExpression.object).doubleValue;
+        subExpression.object = [NSDecimalNumber numberWithDouble:d + (([op isEqualToString:@"++"]) ? 1 : -1)];
+        return subExpression;
+    } else if([op isEqualToString:@"-"]) {
+        if (![subExpression.object isMemberOfClass:[NSDecimalNumber class]])
+            [NSException raise:@"JawaScript Runtime Exception" format:@"- only applies to numbers"];
+        double d = ((NSDecimalNumber*)subExpression.object).doubleValue;
+        return [JawaObjectRef RefWithNumber:-d in:self];
+    } else if([op isEqualToString:@"~"]) {
+        if (![subExpression.object isMemberOfClass:[NSDecimalNumber class]])
+            [NSException raise:@"JawaScript Runtime Exception" format:@"- only applies to numbers"];
+        int truncated = [self toInteger:subExpression];
+        return [JawaObjectRef RefWithNumber:~truncated in:self];
+    } else if([op isEqualToString:@"!"]) {
+        if (![subExpression.object isMemberOfClass:[NSDecimalNumber class]])
+            [NSException raise:@"JawaScript Runtime Exception" format:@"- only applies to numbers"];
+        bool b = ((NSDecimalNumber*)subExpression.object).boolValue;
+        return [JawaObjectRef RefWithBoolean:!b in:self];
+    }
+    return nil;
+}
+
+-(JawaObjectRef*)evalAndExpression:(NSDictionary*)ast {
+    NSArray* oprnds = [ast objectForKey:PR_subExpressions];
+    
+    JawaObjectRef* firstOprnd = [self evaluate:[oprnds objectAtIndex:0]];
+    for (NSUInteger i = 1 ; i < oprnds.count ; i++) {
+        JawaObjectRef* secondOprnd = [self evaluate:[oprnds objectAtIndex:i]];
+        if (firstOprnd == nil || secondOprnd == nil ||
+            ![firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] ||
+            ![secondOprnd.object isMemberOfClass:[NSDecimalNumber class]    ])
+            [NSException raise:@"JawaScript Runtime Exception" format:@"& applies to only numbers"];
+        int l = [self toInteger:firstOprnd];
+        int r = [self toInteger:secondOprnd];
+        firstOprnd = [JawaObjectRef RefWithNumber:l & r in:self];
+    }
+    return firstOprnd;
+}
+
+-(JawaObjectRef*)evalExclusiveOrExpression:(NSDictionary*)ast {
+    NSArray* oprnds = [ast objectForKey:PR_subExpressions];
+    
+    JawaObjectRef* firstOprnd = [self evaluate:[oprnds objectAtIndex:0]];
+    for (NSUInteger i = 1 ; i < oprnds.count ; i++) {
+        JawaObjectRef* secondOprnd = [self evaluate:[oprnds objectAtIndex:i]];
+        if (firstOprnd == nil || secondOprnd == nil ||
+            ![firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] ||
+            ![secondOprnd.object isMemberOfClass:[NSDecimalNumber class]    ])
+            [NSException raise:@"JawaScript Runtime Exception" format:@"^ applies to only numbers"];
+        int l = [self toInteger:firstOprnd];
+        int r = [self toInteger:secondOprnd];
+        firstOprnd = [JawaObjectRef RefWithNumber:l ^ r in:self];
+    }
+    return firstOprnd;
+}
+
+-(JawaObjectRef*)evalInclusiveOrExpression:(NSDictionary*)ast {
+    NSArray* oprnds = [ast objectForKey:PR_subExpressions];
+    
+    JawaObjectRef* firstOprnd = [self evaluate:[oprnds objectAtIndex:0]];
+    for (NSUInteger i = 1 ; i < oprnds.count ; i++) {
+        JawaObjectRef* secondOprnd = [self evaluate:[oprnds objectAtIndex:i]];
+        if (firstOprnd == nil || secondOprnd == nil ||
+            ![firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] ||
+            ![secondOprnd.object isMemberOfClass:[NSDecimalNumber class]    ])
+            [NSException raise:@"JawaScript Runtime Exception" format:@"| applies to only numbers"];
+        int l = [self toInteger:firstOprnd];
+        int r = [self toInteger:secondOprnd];
+        firstOprnd = [JawaObjectRef RefWithNumber:l | r in:self];
+    }
+    return firstOprnd;
+}
+
+-(JawaObjectRef*)execContinueStatement:(NSDictionary*)ast {
+    [self.currentIterationScope setObject:NULL_CONSTANT forKey:@"continue"];
+    return nil;
+}
+
+-(JawaObjectRef*)execBreakStatement:(NSDictionary*)ast {
+    [self.currentIterationScope setObject:NULL_CONSTANT forKey:@"break"];
+    return nil;
+}
+
+-(JawaObjectRef*)execWhileStatement:(NSDictionary*)ast {
+    NSDictionary* body = [ast objectForKey:PR_body];
+    NSDictionary* test = [ast objectForKey:PR_test];
+    NSMutableDictionary* scope = [[NSMutableDictionary alloc]init];
+    [self.currentActivation addObject:scope];
+    NSMutableDictionary* outerIterationScope = self.currentIterationScope;
+    self.currentIterationScope = scope;
+
+    while (true) {
+        JawaObjectRef* cond = [self evaluate:test];
+        if (!(cond != nil && [cond.object isKindOfClass:[NSNumber class]] && ((NSNumber*)cond.object).boolValue))
+            break;
+        [self evaluate:body];
+        if ([[self.currentActivation objectAtIndex:0]objectForKey:@"return"] != nil)
+            break;
+        if ([self.currentIterationScope objectForKey:@"break"] != nil)
+            break;
+        if ([self.currentIterationScope objectForKey:@"continue"] != nil)
+            [self.currentIterationScope removeObjectForKey:@"continue"];
+    }
+    
+    self.currentIterationScope = outerIterationScope;
+    [self.currentActivation removeLastObject];
+    return nil;
+}
+
+-(JawaObjectRef*)execDoWhileStatement:(NSDictionary*)ast {
+    NSDictionary* body = [ast objectForKey:PR_body];
+    NSDictionary* test = [ast objectForKey:PR_test];
+    NSMutableDictionary* scope = [[NSMutableDictionary alloc]init];
+    [self.currentActivation addObject:scope];
+    NSMutableDictionary* outerIterationScope = self.currentIterationScope;
+    self.currentIterationScope = scope;
+    
+    JawaObjectRef* cond;
+    do {
+        [self evaluate:body];
+        if ([[self.currentActivation objectAtIndex:0]objectForKey:@"return"] != nil)
+            break;
+        if ([self.currentIterationScope objectForKey:@"break"] != nil)
+            break;
+        if ([self.currentIterationScope objectForKey:@"continue"] != nil)
+            [self.currentIterationScope removeObjectForKey:@"continue"];
+        cond = [self evaluate:test];
+    } while (cond != nil && [cond.object isKindOfClass:[NSNumber class]] && ((NSNumber*)cond.object).boolValue);
+    self.currentIterationScope = outerIterationScope;
+    [self.currentActivation removeLastObject];
+    return nil;
+}
+
+-(JawaObjectRef*)evalSequenceExpression:(NSDictionary*)ast {
+    NSArray* expressions = [ast objectForKey:PR_expressions];
+    JawaObjectRef* ret = nil;
+    for(NSDictionary *expr in expressions) {
+        ret = [self evaluate:expr];
+    }
+    return ret;
+}
+
 -(JawaObjectRef*)evalConditionalExpression:(NSDictionary*)ast {
     JawaObjectRef* test = [self evaluate:[ast objectForKey:PR_condition]];
     if (test == nil)
@@ -480,7 +645,7 @@ NSMutableDictionary* builtinFunctions;
         } else {
             return [((JawaArray*)object.object) getProp:[property description]];
         }
-    } else if ([object.object isMemberOfClass:[NSMutableString class]]) {
+    } else if ([object.object isKindOfClass:[NSString class]]) {
         if ([property.object isMemberOfClass:[NSDecimalNumber class]]) {
             double v = ((NSDecimalNumber*)property.object).doubleValue;
             if (fabs(v-round(v)) < QUANTUM) {
@@ -780,7 +945,7 @@ NSMutableDictionary* builtinFunctions;
         
         if (iterable == nil)
             [NSException raise:@"JawaScript Runtime Exception" format:@"Null is not iterable"];
-        if ([iterable.object isMemberOfClass:[NSMutableString class]]) {
+        if ([iterable.object isKindOfClass:[NSString class]]) {
             NSUInteger len = ((NSString*)iterable.object).length;
             for (NSUInteger i = 0 ; i < len ; i++) {
                 [scope setObject:[JawaObjectRef RefWithNumber:i in:self] forKey:iterator];
@@ -914,9 +1079,9 @@ NSMutableDictionary* builtinFunctions;
         case BLOCK_STATEMENT:
             return [self evalBlockStatement:tree];
         case EMPTY_STATEMENT:
-            break;
+            return nil;
         case SEQUENCE_EXPRESSION:
-            break;
+            return [self evalSequenceExpression:tree];
         case ASSIGNMENT_EXPRESSION:
             return [self evalAssignmentExpression:tree];
         case CONDITIONAL_EXPRESSION:
@@ -926,17 +1091,17 @@ NSMutableDictionary* builtinFunctions;
         case LOGICAL_AND_EXPRESSION:
             return [self evalLogicalAndExpression:tree];
         case INCLUSIVE_OR_EXPRESSION:
-            break;
+            return [self evalInclusiveOrExpression:tree];
         case EXCLUSIVE_OR_EXPRESSION:
-            break;
+            return [self evalExclusiveOrExpression:tree];
         case AND_EXPRESSION:
-            break;
+            return [self evalAndExpression:tree];
         case EQUALITY_EXPRESSION:
             return [self evalEqualityExpression:tree];
         case RELATIONAL_EXPRESSION:
             return [self evalRelationalExpression:tree];
         case IN_EXPRESSION:
-            break;
+            return [self evalInExpression:tree];
         case SHIFT_EXPRESSION:
             return [self evalShiftExpression:tree];
         case ADDITIVE_EXPRESSION:
@@ -944,7 +1109,7 @@ NSMutableDictionary* builtinFunctions;
         case MULTIPLICATIVE_EXPRESSION:
             return [self evalMultiplicativeExpression:tree];
         case UNARY_EXPRESSION:
-            break;
+            return [self evalUnaryExpression:tree];
         case POSTFIX_EXPRESSION:
             return [self evalPostfixExpression:tree];
         case STATIC_MEMBER_EXPRESSION:
@@ -966,13 +1131,13 @@ NSMutableDictionary* builtinFunctions;
         case VAR_STATEMENT:
             return [self execVarStatement:tree];
         case WHILE_STATEMENT:
-            break;
+            return [self execWhileStatement:tree];
         case CONTINUE_STATEMENT:
-            break;
+            return [self execContinueStatement:tree];
         case BREAK_STATEMENT:
-            break;
+            return [self execBreakStatement:tree];
         case DO_WHILE_STATEMENT:
-            break;
+            return [self execDoWhileStatement:tree];
         case FOR_STATEMENT:
             return [self execForStatement:tree];
         case VARIABLE_DECLARATION:
