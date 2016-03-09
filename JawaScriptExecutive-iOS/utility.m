@@ -26,3 +26,9 @@ NSMutableDictionary* jsonToDictionary(NSString* str) {
                                   error:&error];
     return dict;
 }
+
+NSString* dictionaryToJSON(NSDictionary* dict) {
+    NSError *error;
+    NSData *data = [NSJSONSerialization dataWithJSONObject:dict options:kNilOptions error:&error];
+    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+}

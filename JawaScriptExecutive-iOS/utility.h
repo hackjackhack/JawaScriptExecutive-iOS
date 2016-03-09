@@ -11,5 +11,6 @@
 
 extern NSMutableArray* jsonToArray(NSString* str);
 extern NSMutableDictionary* jsonToDictionary(NSString* str);
+extern NSString* dictionaryToJSON(NSDictionary* dict);
 
 #endif /* utility_h */

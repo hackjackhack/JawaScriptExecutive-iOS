@@ -105,11 +105,11 @@ NSMutableArray* jawaObjectPool;
             return [NSString stringWithFormat:@"%ld", (long)n];
         }
         return [NSString stringWithFormat:@"%f", n];
-    } else if ([self.object isMemberOfClass: [NSNumber class]]) {
+    } else if ([self.object isKindOfClass: [NSNumber class]]) {
         bool b = ((NSNumber*)self.object).boolValue;
         return b ? @"true" : @"false";
-    } else if ([self.object isMemberOfClass: [NSMutableString class]]) {
-        return [NSString stringWithString:((NSMutableString*)self.object)];
+    } else if ([self.object isKindOfClass: [NSString class]]) {
+        return [NSString stringWithString:((NSString*)self.object)];
     } else if ([self.object isKindOfClass:[JawaObject class]]) {
         return [((JawaObject*)self.object) description];
     }
@@ -124,7 +124,7 @@ NSMutableArray* jawaObjectPool;
         return self.object;
 }
 -(void)dealloc {
-    printf("Releasing %s\n", [[self description]cStringUsingEncoding:NSUTF8StringEncoding]);
+    //printf("Releasing %s\n", [NSStringFromClass([self class]) cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 +(id)RefIn:(JawaExecutor *)ex {

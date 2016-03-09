@@ -9,15 +9,23 @@
 #ifndef JawaExecutor_h
 #define JawaExecutor_h
 
+extern NSMutableDictionary* builtinFunctions;
+
 @class JawaObjectRef;
 
+
 @interface JawaExecutor : NSObject
+{
+    JawaObjectRef* NULL_CONSTANT;
+}
+
 @property (weak) NSMutableDictionary* env;
 @property NSMutableDictionary* global;
 @property NSMutableArray* activations;
 @property NSMutableArray* currentActivation;
 @property NSMutableDictionary* currentIterationScope;
 @property BOOL isFromCallExpression;
+
 
 -(id)init;
 -(JawaObjectRef*)evaluate:(NSDictionary*)tree;
