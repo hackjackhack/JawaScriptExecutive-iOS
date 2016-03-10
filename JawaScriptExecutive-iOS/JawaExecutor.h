@@ -34,7 +34,7 @@ extern NSMutableDictionary* builtinFunctions;
 -(JawaObjectRef*)dispatchBuiltin:(NSString*)funcName;
 @end
 
-#define QUANTUM 0.0000000000000001
+#define QUANTUM 0.00001
 
 typedef NS_ENUM(NSInteger, ASTType) {
     SCRIPT_BODY = 0,

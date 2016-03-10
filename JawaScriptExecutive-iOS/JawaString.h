@@ -12,6 +12,6 @@
 #include "JawaObjectRef.h"
 
 extern NSDictionary* stringPrototype;
-extern JawaObjectRef* dispatchStringBuiltin(NSMutableString *str, NSString* funcName);
+extern JawaObjectRef* dispatchStringBuiltin(NSString *str, NSString* funcName, JawaExecutor* ex);
 
 #endif /* JawaString_h */

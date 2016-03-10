@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "JawaArray.h"
 #import "JawaObjectProtected.h"
+#import "JawaNumber.h"
 
 NSMutableDictionary* arrayPrototype;
 
@@ -78,6 +79,45 @@ NSMutableDictionary* arrayPrototype;
         // Array.length
         case 0: {
             return [JawaObjectRef RefWithNumber:self.elements.count in:self.executor];
+        }
+        // Array.slice(start, end)
+        case 1: {
+            JawaObjectRef* start = [[self.executor.currentActivation lastObject]objectForKey:@"start"];
+            if (![start.object isMemberOfClass:[JawaNumber class]])
+                [NSException raise:@"JawaScript Runtime Exception" format:@"start of slice() must be a number"];
+            NSUInteger startInt = ((NSNumber*)start.object).unsignedIntValue;
+            if (startInt >= self.elements.count)
+                [NSException raise:@"JawaScript Runtime Exception" format:@"start of slice() out of bound"];
+            NSUInteger endInt = self.elements.count;
+            JawaObjectRef* end = [[self.executor.currentActivation lastObject]objectForKey:@"end"];
+            if (end != nil) {
+                if (![end.object isKindOfClass:[NSNumber class]])
+                    [NSException raise:@"JawaScript Runtime Exception" format:@"end of slice() must be a number"];
+                endInt = ((NSNumber*)end.object).unsignedIntValue;
+                if (endInt > self.elements.count)
+                    [NSException raise:@"JawaScript Runtime Exception" format:@"end of slice() out of bound"];
+            }
+            JawaArray* slice = [[JawaArray alloc]initIn:self.executor];
+            for (NSUInteger i = startInt ; i < endInt ; i++) {
+                [slice.elements addPointer:[self.elements pointerAtIndex:i]];
+            }
+            return [JawaObjectRef RefWithJawaArray:slice];
+        }
+        // Array.join(sep)
+        case 2: {
+            JawaObjectRef* sep = [[self.executor.currentActivation lastObject]objectForKey:@"sep"];
+            if (![sep.object isKindOfClass:[NSString class]])
+                [NSException raise:@"JawaScript Runtime Exception" format:@"separator of join() must be a string"];
+            NSString* sepStr = [sep description];
+            NSMutableString* ret = [NSMutableString stringWithString:@""];
+            bool first = true;
+            for (JawaObjectRef* o in self.elements) {
+                if (!first)
+                    [ret appendString:sepStr];
+                first = false;
+                [ret appendString:[o description]];
+            }
+            return [JawaObjectRef RefWithString:ret in:self.executor];
         }
         default:
             [NSException raise:@"JavaScript Runtime Exception" format:@"%@ not implemented yet", funcName];

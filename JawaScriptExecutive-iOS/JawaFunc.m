@@ -28,8 +28,8 @@
 -(JawaObjectRef*)apply:(JawaObjectRef*)on {
     if (!self.isBuiltIn)
         return nil;
-    if ([on.object isMemberOfClass:[NSMutableString class]])
-        return dispatchStringBuiltin((NSMutableString*)on.object, self.name);
+    if ([on.object isKindOfClass:[NSString class]])
+        return dispatchStringBuiltin((NSString*)on.object, self.name, self.executor);
     if ([on.object isKindOfClass:[JawaObject class]])
         return [(JawaObject*)on.object invokeBuiltin:self.name];
     return nil;

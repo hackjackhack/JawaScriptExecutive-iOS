@@ -10,6 +10,7 @@
 #import "JawaExecutor.h"
 #import "JawaArray.h"
 #import "JawaFunc.h"
+#import "JawaNumber.h"
 #import "JawaObjectRef.h"
 
 NSMutableArray* jawaObjectPool;
@@ -29,7 +30,7 @@ NSMutableArray* jawaObjectPool;
 -(id)initWithNumber:(double)number in:(JawaExecutor*)ex {
     self = [super init];
     if (self) {
-        _object = [NSDecimalNumber numberWithDouble:number];
+        _object = [[JawaNumber alloc]init:number];
         _executor = ex;
         [jawaObjectPool addObject:self];
     }
@@ -99,12 +100,8 @@ NSMutableArray* jawaObjectPool;
 }
 
 -(NSString*)description {
-    if ([self.object isMemberOfClass: [NSDecimalNumber class]]) {
-        double n = ((NSDecimalNumber*)self.object).doubleValue;
-        if (fabs(n-round(n)) < QUANTUM) {
-            return [NSString stringWithFormat:@"%ld", (long)n];
-        }
-        return [NSString stringWithFormat:@"%f", n];
+    if ([self.object isMemberOfClass: [JawaNumber class]]) {
+        return [((JawaNumber*)self.object) description];
     } else if ([self.object isKindOfClass: [NSNumber class]]) {
         bool b = ((NSNumber*)self.object).boolValue;
         return b ? @"true" : @"false";
@@ -116,7 +113,10 @@ NSMutableArray* jawaObjectPool;
     return nil;
 }
 -(id)transfer {
-    if ([self.object isKindOfClass:[NSNumber class]]) {
+    if ([self.object isMemberOfClass:[JawaNumber class]]) {
+        double d = ((JawaNumber*)self.object).value;
+        return [JawaNumber numberWithDouble:d];
+    } else if ([self.object isKindOfClass:[NSNumber class]]) {
         return [((NSNumber*)self.object) copy];
     } else if ([self.object isMemberOfClass: [NSMutableString class]]) {
         return [((NSMutableString*)self.object) mutableCopy];

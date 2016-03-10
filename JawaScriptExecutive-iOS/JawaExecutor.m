@@ -12,6 +12,7 @@
 #import "JawaArray.h"
 #import "JawaFunc.h"
 #import "JawaString.h"
+#import "JawaNumber.h"
 #import "utility.h"
 
 NSMutableDictionary* builtinFunctions;
@@ -46,6 +47,10 @@ NSMutableDictionary* builtinFunctions;
         }
         
         [self registerBuilitinProp:arrayPrototype propName:@"length"];
+        [self registerBuilitinFunc:arrayPrototype funcName:@"slice" params:@[@"start", @"end"]];
+        [self registerBuilitinFunc:arrayPrototype funcName:@"join" params:@[@"sep"]];
+        
+        [self registerBuilitinFunc:stringPrototype funcName:@"split" params:@[@"delim"]];
     }
     return self;
 }
@@ -105,9 +110,10 @@ NSMutableDictionary* builtinFunctions;
     } else if ([ret.object isKindOfClass:[NSString class]]) {
         [retJSON setObject:@"string" forKey:@"retType"];
         [retJSON setObject:[ret.object copy] forKey:@"retValue"];
-    } else if ([ret.object isMemberOfClass:[NSDecimalNumber class]]) {
+    } else if ([ret.object isMemberOfClass:[JawaNumber class]]) {
         [retJSON setObject:@"number" forKey:@"retType"];
-        [retJSON setObject:[ret.object copy] forKey:@"retValue"];
+        double d = ((JawaNumber*)ret.object).value;
+        [retJSON setObject:[NSNumber numberWithDouble:d] forKey:@"retValue"];
     } else if ([ret.object isMemberOfClass:[NSNumber class]]) {
         [retJSON setObject:@"boolean" forKey:@"retType"];
         NSNumber *n = (NSNumber*)ret.object;
@@ -120,8 +126,8 @@ NSMutableDictionary* builtinFunctions;
 }
 
 -(int)toInteger:(JawaObjectRef*)o {
-    if ([o.object isMemberOfClass:[NSDecimalNumber class]]) {
-        double d = ((NSDecimalNumber*)o.object).doubleValue;
+    if ([o.object isMemberOfClass:[JawaNumber class]]) {
+        double d = ((JawaNumber*)o.object).doubleValue;
         int magnitude = (int)(long)floor(fabs(d));
         int sign = d >= 0 ? 1 : -1;
         return magnitude * sign;
@@ -131,7 +137,36 @@ NSMutableDictionary* builtinFunctions;
 }
 
 -(JawaObjectRef*)evalInExpression:(NSDictionary*)ast {
-    return nil;
+    NSArray* subExpressions = [ast objectForKey:PR_subExpressions];
+    
+    JawaObjectRef* firstOprnd = [self evaluate:[subExpressions objectAtIndex:0]];
+    for (NSUInteger i = 1 ; i < subExpressions.count ; i++) {
+        JawaObjectRef* secondOprnd = [self evaluate:[subExpressions objectAtIndex:i]];
+        if (secondOprnd == nil)
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Second operand of in-expression mustn't be null"];
+        if (firstOprnd == nil)
+            firstOprnd = [JawaObjectRef RefWithBoolean:false in:self];
+        
+        bool found;
+        if ([secondOprnd.object isMemberOfClass:[JawaArray class]]) {
+            JawaArray* arr = ((JawaArray*)secondOprnd.object);
+            if ([firstOprnd.object isKindOfClass:[NSNumber class]]) {
+                double value = ((NSNumber*)firstOprnd.object).doubleValue;
+                if (fabs(round(value) - value) < QUANTUM) {
+                    int index = (int)round(value);
+                    found = index >= 0 && index < arr.elements.count;
+                } else
+                    found = false;
+            } else
+                found = [arr getProp:[firstOprnd description]] != nil;
+        } else if ([secondOprnd.object isMemberOfClass:[JawaObject class]]) {
+            JawaObject* obj = ((JawaObject*)secondOprnd.object);
+            found = [obj getProp:[firstOprnd description]] != nil;
+        } else
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Illegal operand for in-expression"];
+        firstOprnd = [JawaObjectRef RefWithBoolean:found in:self];
+    }
+    return firstOprnd;
 }
 
 -(JawaObjectRef*)evalUnaryExpression:(NSDictionary*)ast {
@@ -140,25 +175,25 @@ NSMutableDictionary* builtinFunctions;
     if (subExpression == nil)
         [NSException raise:@"JawaScript Runtime Exception" format:@"Unary op cannot be applied to null"];
     if ([op isEqualToString:@"++"] || [op isEqualToString:@"--"]) {
-        if (![subExpression.object isMemberOfClass:[NSDecimalNumber class]])
+        if (![subExpression.object isMemberOfClass:[JawaNumber class]])
             [NSException raise:@"JawaScript Runtime Exception" format:@"++ and -- only apply to numbers"];
-        double d = ((NSDecimalNumber*)subExpression.object).doubleValue;
-        subExpression.object = [NSDecimalNumber numberWithDouble:d + (([op isEqualToString:@"++"]) ? 1 : -1)];
+        double d = ((JawaNumber*)subExpression.object).doubleValue;
+        subExpression.object = [JawaNumber numberWithDouble:d + (([op isEqualToString:@"++"]) ? 1 : -1)];
         return subExpression;
     } else if([op isEqualToString:@"-"]) {
-        if (![subExpression.object isMemberOfClass:[NSDecimalNumber class]])
+        if (![subExpression.object isMemberOfClass:[JawaNumber class]])
             [NSException raise:@"JawaScript Runtime Exception" format:@"- only applies to numbers"];
-        double d = ((NSDecimalNumber*)subExpression.object).doubleValue;
+        double d = ((JawaNumber*)subExpression.object).doubleValue;
         return [JawaObjectRef RefWithNumber:-d in:self];
     } else if([op isEqualToString:@"~"]) {
-        if (![subExpression.object isMemberOfClass:[NSDecimalNumber class]])
+        if (![subExpression.object isMemberOfClass:[JawaNumber class]])
             [NSException raise:@"JawaScript Runtime Exception" format:@"- only applies to numbers"];
         int truncated = [self toInteger:subExpression];
         return [JawaObjectRef RefWithNumber:~truncated in:self];
     } else if([op isEqualToString:@"!"]) {
-        if (![subExpression.object isMemberOfClass:[NSDecimalNumber class]])
+        if (![subExpression.object isKindOfClass:[NSNumber class]])
             [NSException raise:@"JawaScript Runtime Exception" format:@"- only applies to numbers"];
-        bool b = ((NSDecimalNumber*)subExpression.object).boolValue;
+        bool b = ((NSNumber*)subExpression.object).boolValue;
         return [JawaObjectRef RefWithBoolean:!b in:self];
     }
     return nil;
@@ -171,8 +206,8 @@ NSMutableDictionary* builtinFunctions;
     for (NSUInteger i = 1 ; i < oprnds.count ; i++) {
         JawaObjectRef* secondOprnd = [self evaluate:[oprnds objectAtIndex:i]];
         if (firstOprnd == nil || secondOprnd == nil ||
-            ![firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] ||
-            ![secondOprnd.object isMemberOfClass:[NSDecimalNumber class]    ])
+            ![firstOprnd.object isMemberOfClass:[JawaNumber class]] ||
+            ![secondOprnd.object isMemberOfClass:[JawaNumber class]    ])
             [NSException raise:@"JawaScript Runtime Exception" format:@"& applies to only numbers"];
         int l = [self toInteger:firstOprnd];
         int r = [self toInteger:secondOprnd];
@@ -188,8 +223,8 @@ NSMutableDictionary* builtinFunctions;
     for (NSUInteger i = 1 ; i < oprnds.count ; i++) {
         JawaObjectRef* secondOprnd = [self evaluate:[oprnds objectAtIndex:i]];
         if (firstOprnd == nil || secondOprnd == nil ||
-            ![firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] ||
-            ![secondOprnd.object isMemberOfClass:[NSDecimalNumber class]    ])
+            ![firstOprnd.object isMemberOfClass:[JawaNumber class]] ||
+            ![secondOprnd.object isMemberOfClass:[JawaNumber class]])
             [NSException raise:@"JawaScript Runtime Exception" format:@"^ applies to only numbers"];
         int l = [self toInteger:firstOprnd];
         int r = [self toInteger:secondOprnd];
@@ -205,8 +240,8 @@ NSMutableDictionary* builtinFunctions;
     for (NSUInteger i = 1 ; i < oprnds.count ; i++) {
         JawaObjectRef* secondOprnd = [self evaluate:[oprnds objectAtIndex:i]];
         if (firstOprnd == nil || secondOprnd == nil ||
-            ![firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] ||
-            ![secondOprnd.object isMemberOfClass:[NSDecimalNumber class]    ])
+            ![firstOprnd.object isMemberOfClass:[JawaNumber class]] ||
+            ![secondOprnd.object isMemberOfClass:[JawaNumber class]    ])
             [NSException raise:@"JawaScript Runtime Exception" format:@"| applies to only numbers"];
         int l = [self toInteger:firstOprnd];
         int r = [self toInteger:secondOprnd];
@@ -322,9 +357,9 @@ NSMutableDictionary* builtinFunctions;
                 NSString* l = (NSString*)firstOprnd.object;
                 NSString* r = (NSString*)secondOprnd.object;
                 result = [l isEqualToString:r];
-            } else if([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                NSDecimalNumber* l = (NSDecimalNumber*)firstOprnd.object;
-                NSDecimalNumber* r = (NSDecimalNumber*)secondOprnd.object;
+            } else if([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                JawaNumber* l = (JawaNumber*)firstOprnd.object;
+                JawaNumber* r = (JawaNumber*)secondOprnd.object;
                 result = l.doubleValue == r.doubleValue;
             } else if([firstOprnd.object isMemberOfClass:[NSNumber class]] && [secondOprnd.object isMemberOfClass:[NSNumber class]]) {
                 NSNumber* l = (NSNumber*)firstOprnd.object;
@@ -347,7 +382,7 @@ NSMutableDictionary* builtinFunctions;
     for (NSDictionary* expr in subExpressions) {
         JawaObjectRef* oprnd = [self evaluate:expr];
         if (oprnd == nil ||
-            ([oprnd.object isMemberOfClass:[NSDecimalNumber class]] && ((NSDecimalNumber*)oprnd.object).doubleValue == 0) ||
+            ([oprnd.object isMemberOfClass:[JawaNumber class]] && ((JawaNumber*)oprnd.object).doubleValue == 0) ||
             ([oprnd.object isMemberOfClass:[NSNumber class]] && !((NSNumber*)oprnd.object).boolValue) ||
             ([oprnd.object isKindOfClass:[NSString class]] && ((NSString*)oprnd.object).length == 0))
             return oprnd;
@@ -360,7 +395,7 @@ NSMutableDictionary* builtinFunctions;
     for (NSDictionary* expr in subExpressions) {
         JawaObjectRef* oprnd = [self evaluate:expr];
         if (oprnd == nil ||
-            ([oprnd.object isMemberOfClass:[NSDecimalNumber class]] && ((NSDecimalNumber*)oprnd.object).doubleValue != 0) ||
+            ([oprnd.object isMemberOfClass:[JawaNumber class]] && ((JawaNumber*)oprnd.object).doubleValue != 0) ||
             ([oprnd.object isMemberOfClass:[NSNumber class]] && ((NSNumber*)oprnd.object).boolValue) ||
             ([oprnd.object isKindOfClass:[NSString class]] && ((NSString*)oprnd.object).length > 0) ||
             ([oprnd.object isMemberOfClass:[JawaFunc class]]) ||
@@ -384,25 +419,25 @@ NSMutableDictionary* builtinFunctions;
         if (firstOprnd == nil || secondOprnd == nil)
             [NSException raise:@"JawaScript Runtime Exception" format:@"Multiplicative ops cannot have null operands"];
         if ([op isEqualToString:@"*"]) {
-            if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                double l = ((NSDecimalNumber*)firstOprnd.object).doubleValue;
-                double r = ((NSDecimalNumber*)secondOprnd.object).doubleValue;
+            if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                double l = ((JawaNumber*)firstOprnd.object).doubleValue;
+                double r = ((JawaNumber*)secondOprnd.object).doubleValue;
                 firstOprnd = [JawaObjectRef RefWithNumber:l * r in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for *"];
         } else if ([op isEqualToString:@"/"]) {
-            if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                double l = ((NSDecimalNumber*)firstOprnd.object).doubleValue;
-                double r = ((NSDecimalNumber*)secondOprnd.object).doubleValue;
+            if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                double l = ((JawaNumber*)firstOprnd.object).doubleValue;
+                double r = ((JawaNumber*)secondOprnd.object).doubleValue;
                 if (r == 0)
                     [NSException raise:@"JawaScript Runtime Exception" format:@"Divided by zero"];
                 firstOprnd = [JawaObjectRef RefWithNumber:l / r in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for /"];
         } else if ([op isEqualToString:@"%"]) {
-            if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                long long l = ((NSDecimalNumber*)firstOprnd.object).longLongValue;
-                long long r = ((NSDecimalNumber*)secondOprnd.object).longLongValue;
+            if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                int l = ((JawaNumber*)firstOprnd.object).intValue;
+                int r = ((JawaNumber*)secondOprnd.object).intValue;
                 if (r == 0)
                     [NSException raise:@"JawaScript Runtime Exception" format:@"Divided by zero"];
                 firstOprnd = [JawaObjectRef RefWithNumber:l % r in:self];
@@ -427,24 +462,24 @@ NSMutableDictionary* builtinFunctions;
         if (firstOprnd == nil || secondOprnd == nil)
             [NSException raise:@"JawaScript Runtime Exception" format:@"Shift ops cannot have null operands"];
         if ([op isEqualToString:@">>"]) {
-            if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                long long shifted = ((NSDecimalNumber*)firstOprnd.object).longLongValue;
-                int shift = ((NSDecimalNumber*)secondOprnd.object).intValue;
+            if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                long shifted = ((JawaNumber*)firstOprnd.object).longValue;
+                int shift = ((JawaNumber*)secondOprnd.object).intValue;
                 firstOprnd = [JawaObjectRef RefWithNumber:shifted >> shift in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for shift op"];
         } else if ([op isEqualToString:@"<<"]) {
-            if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                long long shifted = ((NSDecimalNumber*)firstOprnd.object).longLongValue;
-                int shift = ((NSDecimalNumber*)secondOprnd.object).intValue;
-                firstOprnd = [JawaObjectRef RefWithNumber:shifted << shift in:self];
+            if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                long shifted = ((JawaNumber*)firstOprnd.object).longValue;
+                int shift = ((JawaNumber*)secondOprnd.object).intValue;
+                firstOprnd = [JawaObjectRef RefWithNumber:(int)(shifted << shift) in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for shift op"];
         } else if ([op isEqualToString:@">>>"]) {
-            if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                unsigned long long shifted = ((NSDecimalNumber*)firstOprnd.object).unsignedLongLongValue;
-                int shift = ((NSDecimalNumber*)secondOprnd.object).intValue;
-                firstOprnd = [JawaObjectRef RefWithNumber:shifted >> shift in:self];
+            if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                long shifted = ((JawaNumber*)firstOprnd.object).unsignedLongValue;
+                int shift = ((JawaNumber*)secondOprnd.object).intValue;
+                firstOprnd = [JawaObjectRef RefWithNumber:(((unsigned int)shifted) >> shift) in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for shift op"];
         } else
@@ -473,16 +508,16 @@ NSMutableDictionary* builtinFunctions;
     JawaObjectRef* subExpression = [self evaluate:[ast objectForKey:PR_subExpression]];
     if (subExpression == nil)
         [NSException raise:@"JawaScript Runtime Exception" format:@"Postfix op cannot be applied to null"];
-    if (![subExpression.object isMemberOfClass:[NSDecimalNumber class]])
+    if (![subExpression.object isMemberOfClass:[JawaNumber class]])
         [NSException raise:@"JawaScript Runtime Exception"
             format:@"++ and -- must be applied to numbers"];
-    JawaObjectRef* ret = [JawaObjectRef RefWithNumber:((NSDecimalNumber*)subExpression.object).doubleValue in:self];
+    JawaObjectRef* ret = [JawaObjectRef RefWithNumber:((JawaNumber*)subExpression.object).doubleValue in:self];
     NSString* op = [[[ast objectForKey:PR_op]componentsSeparatedByString:@","]objectAtIndex:1];
-    double oldValue = ((NSDecimalNumber*)subExpression.object).doubleValue;
+    double oldValue = ((JawaNumber*)subExpression.object).doubleValue;
     if ([op isEqualToString:@"++"]) {
-        subExpression.object = [NSDecimalNumber numberWithDouble:oldValue + 1];
+        subExpression.object = [JawaNumber numberWithDouble:oldValue + 1];
     } else if ([op isEqualToString:@"--"]) {
-        subExpression.object = [NSDecimalNumber numberWithDouble:oldValue - 1];
+        subExpression.object = [JawaNumber numberWithDouble:oldValue - 1];
     } else
         [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid postfix operator"];
     return ret;
@@ -532,11 +567,11 @@ NSMutableDictionary* builtinFunctions;
             NSString* r = [right description];
             [l appendString:r];
             left.object = l;
-        } else if ([left.object isMemberOfClass:[NSDecimalNumber class]] &&
-                   [right.object isMemberOfClass:[NSDecimalNumber class]]) {
-            double l = ((NSDecimalNumber*)left.object).doubleValue;
-            double r = ((NSDecimalNumber*)right.object).doubleValue;
-            left.object = [NSDecimalNumber numberWithDouble:l + r];
+        } else if ([left.object isMemberOfClass:[JawaNumber class]] &&
+                   [right.object isMemberOfClass:[JawaNumber class]]) {
+            double l = ((JawaNumber*)left.object).doubleValue;
+            double r = ((JawaNumber*)right.object).doubleValue;
+            left.object = [JawaNumber numberWithDouble:l + r];
         } else {
             [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for +="];
         }
@@ -548,23 +583,23 @@ NSMutableDictionary* builtinFunctions;
             [NSException raise:@"JawaScript Runtime Exception" format:@"Left operand of assignment is null"];
         if (right == nil)
             [NSException raise:@"JawaScript Runtime Exception" format:@"Right operand of assignment is null"];
-        if ([left.object isMemberOfClass:[NSDecimalNumber class]] &&
-            [right.object isMemberOfClass:[NSDecimalNumber class]]) {
-            double l = ((NSDecimalNumber*)left.object).doubleValue;
-            double r = ((NSDecimalNumber*)right.object).doubleValue;
+        if ([left.object isMemberOfClass:[JawaNumber class]] &&
+            [right.object isMemberOfClass:[JawaNumber class]]) {
+            double l = ((JawaNumber*)left.object).doubleValue;
+            double r = ((JawaNumber*)right.object).doubleValue;
             unsigned char c = [op characterAtIndex:0];
             switch (c) {
                 case '-':
-                    left.object = [NSDecimalNumber numberWithDouble:l - r];
+                    left.object = [JawaNumber numberWithDouble:l - r];
                     break;
                 case '*':
-                    left.object = [NSDecimalNumber numberWithDouble:l * r];
+                    left.object = [JawaNumber numberWithDouble:l * r];
                     break;
                 case '/':
-                    left.object = [NSDecimalNumber numberWithDouble:l / r];
+                    left.object = [JawaNumber numberWithDouble:l / r];
                     break;
                 case '%':
-                    left.object = [NSDecimalNumber numberWithDouble:(long)l % (long)r];
+                    left.object = [JawaNumber numberWithDouble:(long)l % (long)r];
                     break;
             }
         } else {
@@ -576,17 +611,17 @@ NSMutableDictionary* builtinFunctions;
             [NSException raise:@"JawaScript Runtime Exception" format:@"Left operand of |=,&= is null"];
         if (right == nil)
             [NSException raise:@"JawaScript Runtime Exception" format:@"Right operand of |=,&= is null"];
-        if ([left.object isMemberOfClass:[NSDecimalNumber class]] &&
-            [right.object isMemberOfClass:[NSDecimalNumber class]]) {
-            long long l = ((NSDecimalNumber*)left.object).longLongValue;
-            long long r = ((NSDecimalNumber*)right.object).longLongValue;
+        if ([left.object isMemberOfClass:[JawaNumber class]] &&
+            [right.object isMemberOfClass:[JawaNumber class]]) {
+            int l = [self toInteger:left];
+            int r = [self toInteger:right];
             unsigned char c = [op characterAtIndex:0];
             switch (c) {
                 case '&':
-                    left.object = [JawaObjectRef RefWithNumber:l & r in:self];
+                    left.object = [JawaNumber numberWithDouble:l & r];
                     break;
                 case '|':
-                    left.object = [JawaObjectRef RefWithNumber:l | r in:self];
+                    left.object = [JawaNumber numberWithDouble:l | r];
                     break;
             }
         } else {
@@ -613,7 +648,7 @@ NSMutableDictionary* builtinFunctions;
             return [((JawaFunc*)prop.object) apply:object];
         }
         return prop;
-    } else if ([object.object isMemberOfClass:[NSMutableString class]]) {
+    } else if ([object.object isKindOfClass:[NSString class]]) {
         JawaFunc* func = [stringPrototype objectForKey:property];
         if (func.isPropertyWrapper)
             return [func apply:object];
@@ -628,12 +663,12 @@ NSMutableDictionary* builtinFunctions;
     JawaObjectRef* object = [self evaluate:[ast objectForKey:PR_object]];
     JawaObjectRef* property = [self evaluate:[ast objectForKey:PR_property]];
     if (object == nil || object.object == nil)
-        [NSException raise:@"JawaScript Runtime Exception" format:@"Null cannot have properties"];
+        [NSException raise:@"JawaScript Runtime Exception" format:@"Null cannot have properties\n%@", [ast description]];
     if (property == nil || property.object == nil)
         [NSException raise:@"JawaScript Runtime Exception" format:@"Null Property name cannot compute to null"];
     if ([object.object isMemberOfClass:[JawaArray class]]) {
-        if ([property.object isMemberOfClass:[NSDecimalNumber class]]) {
-            double v = ((NSDecimalNumber*)property.object).doubleValue;
+        if ([property.object isMemberOfClass:[JawaNumber class]]) {
+            double v = ((JawaNumber*)property.object).doubleValue;
             if (fabs(v-round(v)) < QUANTUM) {
                 long index = round(v);
                 if (index > INT_MAX || index < 0)
@@ -646,8 +681,8 @@ NSMutableDictionary* builtinFunctions;
             return [((JawaArray*)object.object) getProp:[property description]];
         }
     } else if ([object.object isKindOfClass:[NSString class]]) {
-        if ([property.object isMemberOfClass:[NSDecimalNumber class]]) {
-            double v = ((NSDecimalNumber*)property.object).doubleValue;
+        if ([property.object isMemberOfClass:[JawaNumber class]]) {
+            double v = ((JawaNumber*)property.object).doubleValue;
             if (fabs(v-round(v)) < QUANTUM) {
                 long index = round(v);
                 if (index > INT_MAX || index < 0)
@@ -670,7 +705,7 @@ NSMutableDictionary* builtinFunctions;
     NSDictionary* function = [ast objectForKey:PR_function];
     JawaObjectRef* object = [self evaluate:function];
     if (object == nil)
-        [NSException raise:@"JawaScript Runtime Exception" format:@"Undefined function: %@", [ast description]];
+        [NSException raise:@"JawaScript Runtime Exception" format:@"Undefined function: %@", [function description]];
     if (object.object == nil ||
         ![object.object isMemberOfClass:[JawaFunc class]])
         [NSException raise:@"JawaScript Runtime Exception"
@@ -735,17 +770,23 @@ NSMutableDictionary* builtinFunctions;
                 NSString* r = [secondOprnd description];
                 [l appendString:r];
                 firstOprnd = [JawaObjectRef RefWithString:l in:self];
-            } else if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                NSDecimalNumber* l = (NSDecimalNumber*)firstOprnd.object;
-                NSDecimalNumber* r = (NSDecimalNumber*)secondOprnd.object;
-                firstOprnd = [JawaObjectRef RefWithNumber:l.doubleValue + r.doubleValue in:self];
+            } else if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                JawaNumber* l = (JawaNumber*)firstOprnd.object;
+                JawaNumber* r = (JawaNumber*)secondOprnd.object;
+                double result = l.doubleValue + r.doubleValue;
+                if (fabs(round(result) - result) < QUANTUM)
+                    result = round(result);
+                firstOprnd = [JawaObjectRef RefWithNumber:result in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for operator +"];
         } else if ([op isEqualToString:@"-"]) {
-            if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                NSDecimalNumber* l = (NSDecimalNumber*)firstOprnd.object;
-                NSDecimalNumber* r = (NSDecimalNumber*)secondOprnd.object;
-                firstOprnd = [JawaObjectRef RefWithNumber:l.doubleValue - r.doubleValue in:self];
+            if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                JawaNumber* l = (JawaNumber*)firstOprnd.object;
+                JawaNumber* r = (JawaNumber*)secondOprnd.object;
+                double result = l.doubleValue - r.doubleValue;
+                if (fabs(round(result) - result) < QUANTUM)
+                    result = round(result);
+                    firstOprnd = [JawaObjectRef RefWithNumber:result in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for operator -"];
         } else {
@@ -777,10 +818,10 @@ NSMutableDictionary* builtinFunctions;
                 NSString* l = (NSString*)firstOprnd.object;
                 NSString* r = (NSString*)secondOprnd.object;
                 firstOprnd = [JawaObjectRef RefWithBoolean:[l compare:r] == NSOrderedAscending in:self];
-            } else if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                NSDecimalNumber* l = (NSDecimalNumber*)firstOprnd.object;
-                NSDecimalNumber* r = (NSDecimalNumber*)secondOprnd.object;
-                firstOprnd = [JawaObjectRef RefWithBoolean:[l compare:r] == NSOrderedAscending in:self];
+            } else if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                double l = ((JawaNumber*)firstOprnd.object).value;
+                double r = ((JawaNumber*)secondOprnd.object).value;
+                firstOprnd = [JawaObjectRef RefWithBoolean:l < r in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for operator <"];
         } else if ([op isEqualToString:@">"]) {
@@ -789,10 +830,10 @@ NSMutableDictionary* builtinFunctions;
                 NSString* l = (NSString*)firstOprnd.object;
                 NSString* r = (NSString*)secondOprnd.object;
                 firstOprnd = [JawaObjectRef RefWithBoolean:[l compare:r] == NSOrderedDescending in:self];
-            } else if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                NSDecimalNumber* l = (NSDecimalNumber*)firstOprnd.object;
-                NSDecimalNumber* r = (NSDecimalNumber*)secondOprnd.object;
-                firstOprnd = [JawaObjectRef RefWithBoolean:[l compare:r] == NSOrderedDescending in:self];
+            } else if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                double l = ((JawaNumber*)firstOprnd.object).value;
+                double r = ((JawaNumber*)secondOprnd.object).value;
+                firstOprnd = [JawaObjectRef RefWithBoolean:l > r in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for operator >"];
         } else if ([op isEqualToString:@"<="]) {
@@ -805,13 +846,10 @@ NSMutableDictionary* builtinFunctions;
                               result == NSOrderedAscending ||
                               result == NSOrderedSame
                                 in:self];
-            } else if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                NSDecimalNumber* l = (NSDecimalNumber*)firstOprnd.object;
-                NSDecimalNumber* r = (NSDecimalNumber*)secondOprnd.object;
-                NSComparisonResult result = [l compare:r];
-                firstOprnd = [JawaObjectRef RefWithBoolean:
-                              result == NSOrderedAscending ||
-                              result == NSOrderedSame
+            } else if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                double l = ((JawaNumber*)firstOprnd.object).value;
+                double r = ((JawaNumber*)secondOprnd.object).value;
+                firstOprnd = [JawaObjectRef RefWithBoolean:l <= r
                                 in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for operator <="];
@@ -825,14 +863,11 @@ NSMutableDictionary* builtinFunctions;
                               result == NSOrderedDescending ||
                               result == NSOrderedSame
                                 in:self];
-            } else if ([firstOprnd.object isMemberOfClass:[NSDecimalNumber class]] && [secondOprnd.object isMemberOfClass:[NSDecimalNumber class]]) {
-                NSDecimalNumber* l = (NSDecimalNumber*)firstOprnd.object;
-                NSDecimalNumber* r = (NSDecimalNumber*)secondOprnd.object;
-                NSComparisonResult result = [l compare:r];
-                firstOprnd = [JawaObjectRef RefWithBoolean:
-                              result == NSOrderedDescending ||
-                              result == NSOrderedSame
-                                in:self];
+            } else if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                double l = ((JawaNumber*)firstOprnd.object).value;
+                double r = ((JawaNumber*)secondOprnd.object).value;
+                firstOprnd = [JawaObjectRef RefWithBoolean:l >= r
+                                                        in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for operator ="];
         } else {
