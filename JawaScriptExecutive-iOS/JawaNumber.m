@@ -2,7 +2,7 @@
 //  JawaNumber.m
 //  JawaScriptExecutive-iOS
 //
-//  Created by Chi-Wei Wang on 2016/3/10.
+//  Created by Chi-Wei (Jack) Wang on 2016/3/10.
 //
 //
 

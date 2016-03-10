@@ -2,7 +2,7 @@
 //  test.m
 //  JawaScriptExecutive-iOS
 //
-//  Created by Ben on 2016/1/30.
+//  Created by Chi-Wei (Jack) Wang on 2016/1/30.
 //
 //
 
