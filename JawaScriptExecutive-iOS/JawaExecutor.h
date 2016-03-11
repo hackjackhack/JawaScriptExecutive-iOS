@@ -9,6 +9,8 @@
 #ifndef JawaExecutor_h
 #define JawaExecutor_h
 
+#import "JawaExternalCallback.h"
+
 extern NSMutableDictionary* builtinFunctions;
 
 @class JawaObjectRef;
@@ -17,7 +19,7 @@ extern NSMutableDictionary* builtinFunctions;
 @interface JawaExecutor : NSObject
 {
     JawaObjectRef* NULL_CONSTANT;
-}
+   }
 
 @property (weak) NSMutableDictionary* env;
 @property NSMutableDictionary* global;
@@ -25,16 +27,18 @@ extern NSMutableDictionary* builtinFunctions;
 @property NSMutableArray* currentActivation;
 @property NSMutableDictionary* currentIterationScope;
 @property BOOL isFromCallExpression;
-
+@property id<JawaExternalCallback> externalCallback;
 
 -(id)init;
 -(JawaObjectRef*)evaluate:(NSDictionary*)tree;
 -(void)execute:(NSDictionary*)ast;
 -(NSMutableDictionary*) invoke:(NSString*)funcName with:(NSMutableDictionary*)asInput;
 -(JawaObjectRef*)dispatchBuiltin:(NSString*)funcName;
+-(void)registerExternalCallback:(id<JawaExternalCallback>)cb;
+-(NSInteger)compare:(JawaObjectRef*)o1 and:(JawaObjectRef*)o2 with:(JawaObjectRef*)comparator;
 @end
 
-#define QUANTUM 0.00001
+#define QUANTUM 0.000000000000001
 
 typedef NS_ENUM(NSInteger, ASTType) {
     SCRIPT_BODY = 0,

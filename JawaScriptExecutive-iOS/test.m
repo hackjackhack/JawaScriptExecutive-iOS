@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "JawaExecutor.h"
+#import "JawaExternalCallback.h"
 #import "utility.h"
 
 BOOL test1() {
@@ -152,13 +153,13 @@ BOOL test8() {
     NSString *actual2 = dictionaryToJSON(result2);
     
     if (![actual1 isEqualToString:answer1]) {
-        printf("Test 8 failed!\n");
+        printf("Test 8-1 failed!\n");
         printf("Expected : %s\n", [answer1 UTF8String]);
         printf("Actual : %s\n", [actual1 UTF8String]);
         return false;
     }
     if (![actual2 isEqualToString:answer2]) {
-        printf("Test 8 failed!\n");
+        printf("Test 8-2 failed!\n");
         printf("Expected : %s\n", [answer2 UTF8String]);
         printf("Actual : %s\n", [actual2 UTF8String]);
         return false;
@@ -167,8 +168,369 @@ BOOL test8() {
     return true;
 }
 
+BOOL test9() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"getAdTag\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"tagUrl\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,http://m.loopme.com?unit=2342342&locale=%%LOCALE%%\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"lang\",\"27\":{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":20,\"10\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,LANG2\"}]},\"12\":{\"t\":24,\"3\":\"getenv\"}},\"11\":{\"t\":24,\"3\":\"value\"}},\"11\":{\"t\":24,\"3\":\"toLowerCase\"}}}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"country\",\"27\":{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":20,\"10\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,COUNTRY3\"}]},\"12\":{\"t\":24,\"3\":\"getenv\"}},\"11\":{\"t\":24,\"3\":\"value\"}},\"11\":{\"t\":24,\"3\":\"toLowerCase\"}}}}]},{\"t\":36,\"32\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,%%LOCALE%%\"},{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"},{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":24,\"3\":\"lang\"},{\"t\":25,\"8\":\"STRING_LITERAL,_\"},{\"t\":24,\"3\":\"country\"}]}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"tagUrl\"},\"11\":{\"t\":24,\"3\":\"replace\"}}}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"http://m.loopme.com?unit=2342342&locale=abcdefg_taiwan\"}";
+    
+    NSMutableDictionary* input = [[NSMutableDictionary alloc]init];
+    [input setValue:@{@"value":@"ABCDEFG"} forKey:@"LANG2"];
+    [input setValue:@{@"value":@"taiwan"} forKey:@"COUNTRY3"];
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"getAdTag" with:input];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 9 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 9 passed.\n");
+    return true;
+}
+
+BOOL test10() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"src\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,this is a string test\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"i\",\"27\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,string\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"src\"},\"11\":{\"t\":24,\"3\":\"indexOf\"}}}}]},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":24,\"3\":\"i\"}},{\"t\":5,\"14\":\"PUNCTUATOR,=\",\"20\":{\"t\":24,\"3\":\"i\"},\"21\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,s\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"src\"},\"11\":{\"t\":24,\"3\":\"lastIndexOf\"}}}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL, \"},{\"t\":24,\"3\":\"i\"}]}},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"src2\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,   XXX YYYY    \"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"out\",\"27\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"},{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"src2\"},\"11\":{\"t\":24,\"3\":\"trim\"}}},{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"}]}}]},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":24,\"3\":\"out\"}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"10 19!!!XXX YYYY!!!\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 10 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 10 passed.\n");
+    return true;
+}
+
+BOOL test11() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"arr\",\"27\":{\"t\":27,\"7\":[{\"t\":25,\"8\":\"STRING_LITERAL,a\"},{\"t\":25,\"8\":\"STRING_LITERAL,b\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,6.0\"},{\"t\":25,\"8\":\"BOOLEAN,true\"},{\"t\":25,\"8\":\"STRING_LITERAL,abc\"},{\"t\":25,\"8\":\"STRING_LITERAL,xxx\"}]}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"obj\",\"27\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"a\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,12.0\"}},{\"t\":39,\"4\":\"b\",\"5\":{\"t\":25,\"8\":\"BOOLEAN,true\"}},{\"t\":39,\"4\":\"cc\",\"5\":{\"t\":25,\"8\":\"STRING_LITERAL,XX\"}}]}}]},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":14,\"16\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"},{\"t\":24,\"3\":\"arr\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,!!\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":14,\"16\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,7.0\"},{\"t\":24,\"3\":\"arr\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,!!\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":14,\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,length\"},{\"t\":24,\"3\":\"arr\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,!!\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":14,\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,nono\"},{\"t\":24,\"3\":\"arr\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,!!\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":14,\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,a\"},{\"t\":24,\"3\":\"obj\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,!!\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":14,\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,c\"},{\"t\":24,\"3\":\"obj\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,!!\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":14,\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,b\"},{\"t\":24,\"3\":\"obj\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,!!\"}]}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"true!!false!!true!!false!!true!!false!!true!!\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 11 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 11 passed.\n");
+    return true;
+}
+
+BOOL test12() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"arr1\",\"27\":{\"t\":27,\"7\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,454.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,527.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,739.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,945.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,903.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,660.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,348.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,103.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,494.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,182.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,607.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,297.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,301.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,598.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,255.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,461.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,575.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,59.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,865.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,161.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,57.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,131.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,980.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,832.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,251.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,639.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,180.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,265.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,582.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,898.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,333.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,906.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,63.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,40.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,462.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,920.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,440.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,722.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,852.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,49.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,151.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,577.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,30.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,516.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,352.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,756.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,943.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,328.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,923.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,253.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,779.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,814.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,452.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,956.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,881.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,905.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,961.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,543.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,329.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,458.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,520.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,139.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,129.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,993.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,203.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,723.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,682.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,931.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,896.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,475.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,457.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,224.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,907.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,506.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,167.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,969.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,712.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,320.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,792.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,675.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,341.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,949.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,90.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,757.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,557.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,515.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,744.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,456.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,567.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,646.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,820.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,478.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,928.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,785.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,600.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,414.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,209.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,73.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,629.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,746.0\"}]}}]},{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr1\"},\"11\":{\"t\":24,\"3\":\"sort\"}}},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":33,\"24\":{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL, \"},{\"t\":22,\"10\":{\"t\":24,\"3\":\"arr1\"},\"11\":{\"t\":24,\"3\":\"i\"}}]}},\"25\":{\"t\":13,\"15\":[{\"t\":5,\"v\":\"<\"}],\"16\":[{\"t\":24,\"3\":\"i\"},{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr1\"},\"11\":{\"t\":24,\"3\":\"length\"}}]},\"30\":[{\"t\":34,\"26\":\"i\",\"27\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,0.0\"}}],\"31\":{\"t\":19,\"13\":{\"t\":24,\"3\":\"i\"},\"14\":\"PUNCTUATOR,++\"}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}},{\"t\":1,\"3\":\"c\",\"23\":[\"l\",\"r\"],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"-\"}],\"16\":[{\"t\":24,\"3\":\"l\"},{\"t\":24,\"3\":\"r\"}]}}]}},{\"t\":1,\"3\":\"test2\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"arr1\",\"27\":{\"t\":27,\"7\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,454.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,527.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,739.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,945.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,903.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,660.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,348.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,103.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,494.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,182.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,607.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,297.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,301.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,598.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,255.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,461.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,575.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,59.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,865.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,161.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,57.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,131.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,980.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,832.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,251.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,639.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,180.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,265.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,582.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,898.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,333.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,906.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,63.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,40.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,462.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,920.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,440.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,722.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,852.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,49.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,151.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,577.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,30.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,516.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,352.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,756.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,943.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,328.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,923.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,253.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,779.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,814.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,452.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,956.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,881.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,905.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,961.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,543.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,329.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,458.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,520.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,139.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,129.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,993.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,203.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,723.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,682.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,931.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,896.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,475.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,457.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,224.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,907.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,506.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,167.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,969.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,712.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,320.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,792.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,675.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,341.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,949.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,90.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,757.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,557.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,515.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,744.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,456.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,567.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,646.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,820.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,478.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,928.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,785.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,600.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,414.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,209.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,73.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,629.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,746.0\"}]}}]},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":24,\"3\":\"c\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr1\"},\"11\":{\"t\":24,\"3\":\"sort\"}}},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":33,\"24\":{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL, \"},{\"t\":22,\"10\":{\"t\":24,\"3\":\"arr1\"},\"11\":{\"t\":24,\"3\":\"i\"}}]}},\"25\":{\"t\":13,\"15\":[{\"t\":5,\"v\":\"<\"}],\"16\":[{\"t\":24,\"3\":\"i\"},{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr1\"},\"11\":{\"t\":24,\"3\":\"length\"}}]},\"30\":[{\"t\":34,\"26\":\"i\",\"27\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,0.0\"}}],\"31\":{\"t\":19,\"13\":{\"t\":24,\"3\":\"i\"},\"14\":\"PUNCTUATOR,++\"}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer1 = @"{\"retType\":\"string\",\"retValue\":\" 103 129 131 139 151 161 167 180 182 203 209 224 251 253 255 265 297 30 301 320 328 329 333 341 348 352 40 414 440 452 454 456 457 458 461 462 475 478 49 494 506 515 516 520 527 543 557 567 57 575 577 582 59 598 600 607 629 63 639 646 660 675 682 712 722 723 73 739 744 746 756 757 779 785 792 814 820 832 852 865 881 896 898 90 903 905 906 907 920 923 928 931 943 945 949 956 961 969 980 993\"}";
+    NSString *answer2 = @"{\"retType\":\"string\",\"retValue\":\" 30 40 49 57 59 63 73 90 103 129 131 139 151 161 167 180 182 203 209 224 251 253 255 265 297 301 320 328 329 333 341 348 352 414 440 452 454 456 457 458 461 462 475 478 494 506 515 516 520 527 543 557 567 575 577 582 598 600 607 629 639 646 660 675 682 712 722 723 739 744 746 756 757 779 785 792 814 820 832 852 865 881 896 898 903 905 906 907 920 923 928 931 943 945 949 956 961 969 980 993\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result1 = [ex invoke:@"test" with:nil];
+    NSString *actual1 = dictionaryToJSON(result1);
+    if (![actual1 isEqualToString:answer1]) {
+        printf("Test 12-1 failed!\n");
+        printf("Expected : %s\n", [answer1 UTF8String]);
+        printf("Actual : %s\n", [actual1 UTF8String]);
+        return false;
+    }
+    NSMutableDictionary* result2 = [ex invoke:@"test2" with:nil];
+    NSString *actual2 = dictionaryToJSON(result2);
+    if (![actual2 isEqualToString:answer2]) {
+        printf("Test 12-2 failed!\n");
+        printf("Expected : %s\n", [answer2 UTF8String]);
+        printf("Actual : %s\n", [actual2 UTF8String]);
+        return false;
+    }
+    
+    printf("Test 12 passed.\n");
+    return true;
+}
+
+BOOL test13() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"arr\",\"27\":{\"t\":27,\"7\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,1.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,2.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,3.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,4.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"}]}}]},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":24,\"3\":\"arr\"}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,8.0\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,7.0\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,100.0\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"unshift\"}}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"},{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"pop\"}}},{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"}]}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,XXX\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,YYY\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"unshift\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"pop\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"shift\"}}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":24,\"3\":\"arr\"}},{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"reverse\"}}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":24,\"3\":\"arr\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,2.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"slice\"}}}]}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"[1,2,3,4,5]!!!7!!![100,1,2,3,4,5,8]!!![8,5,4,3,2,1,100]!!![4,3,2]\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 13 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 13 passed.\n");
+    return true;
+}
+
+BOOL test14() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"str\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,this is a test STRING\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"arr\",\"27\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL, \"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"str\"},\"11\":{\"t\":24,\"3\":\"split\"}}}}]},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":24,\"3\":\"arr\"}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,10.0\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"str\"},\"11\":{\"t\":24,\"3\":\"substring\"}}}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"length\"}}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,11.0\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"str\"},\"11\":{\"t\":24,\"3\":\"charCodeAt\"}}}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,is\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"str\"},\"11\":{\"t\":24,\"3\":\"indexOf\"}}}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,is\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,4.0\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"str\"},\"11\":{\"t\":24,\"3\":\"indexOf\"}}}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,is\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"str\"},\"11\":{\"t\":24,\"3\":\"lastIndexOf\"}}}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,is\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,4.0\"}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"str\"},\"11\":{\"t\":24,\"3\":\"lastIndexOf\"}}}]}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"[this,is,a,test,STRING]!!!is a !!!5!!!101!!!2!!!5!!!5!!!2\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 14 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 14 passed.\n");
+    return true;
+}
+
+BOOL test15() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"x\",\"27\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,1.23456789E8\"}}]},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":16,\"15\":[{\"t\":5,\"v\":\"-\"}],\"16\":[{\"t\":24,\"3\":\"x\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}]}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":17,\"15\":[{\"t\":5,\"v\":\"*\"}],\"16\":[{\"t\":24,\"3\":\"x\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}]}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":17,\"15\":[{\"t\":5,\"v\":\"/\"}],\"16\":[{\"t\":24,\"3\":\"x\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}]}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":17,\"15\":[{\"t\":5,\"v\":\"%\"}],\"16\":[{\"t\":24,\"3\":\"x\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}]}]}},{\"t\":5,\"14\":\"PUNCTUATOR,-=\",\"20\":{\"t\":24,\"3\":\"x\"},\"21\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,56789.0\"}},{\"t\":5,\"14\":\"PUNCTUATOR,*=\",\"20\":{\"t\":24,\"3\":\"x\"},\"21\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,0.5\"}},{\"t\":5,\"14\":\"PUNCTUATOR,/=\",\"20\":{\"t\":24,\"3\":\"x\"},\"21\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,56789.0\"}},{\"t\":5,\"14\":\"PUNCTUATOR,%=\",\"20\":{\"t\":24,\"3\":\"x\"},\"21\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,1357.0\"}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":24,\"3\":\"x\"}]}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    // The number-to-string behavior in Objective-C is different from
+    // ECMAScript standard.
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"!!!123456666!!!15185185047!!!1003713.731707!!!90!!!1086.478015\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 15 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 15 passed.\n");
+    return true;
+}
+
+BOOL test16() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"src\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,abcdefghijklmnopqrstuvwxyz\"}}]},{\"t\":33,\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"c\",\"27\":{\"t\":22,\"10\":{\"t\":24,\"3\":\"src\"},\"11\":{\"t\":24,\"3\":\"i\"}}}]},{\"t\":35,\"18\":{\"t\":30},\"19\":{\"t\":35,\"18\":{\"t\":29},\"19\":{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":24,\"3\":\"c\"}},\"25\":{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":24,\"3\":\"c\"},{\"t\":25,\"8\":\"STRING_LITERAL,x\"}]}},\"25\":{\"t\":7,\"16\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":24,\"3\":\"c\"},{\"t\":25,\"8\":\"STRING_LITERAL,e\"}]},{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":24,\"3\":\"c\"},{\"t\":25,\"8\":\"STRING_LITERAL,u\"}]}]}}]},\"29\":{\"t\":32,\"26\":\"i\",\"28\":{\"t\":24,\"3\":\"src\"}}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}},{\"t\":1,\"3\":\"test2\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"arr\",\"27\":{\"t\":27,\"7\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,1.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,2.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,3.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,4.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,6.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,7.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,8.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,9.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,10.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,11.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,12.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,13.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,14.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,15.0\"}]}}]},{\"t\":33,\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"c\",\"27\":{\"t\":22,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"i\"}}}]},{\"t\":35,\"18\":{\"t\":30},\"19\":{\"t\":35,\"18\":{\"t\":29},\"19\":{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":24,\"3\":\"c\"}},\"25\":{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":24,\"3\":\"c\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,14.0\"}]}},\"25\":{\"t\":7,\"16\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":24,\"3\":\"c\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"}]},{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":24,\"3\":\"c\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,12.0\"}]}]}}]},\"29\":{\"t\":32,\"26\":\"i\",\"28\":{\"t\":24,\"3\":\"arr\"}}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}},{\"t\":1,\"3\":\"test3\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"obj\",\"27\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"abc\",\"5\":{\"t\":25,\"8\":\"STRING_LITERAL,xxx\"}},{\"t\":39,\"4\":\"cde\",\"5\":{\"t\":25,\"8\":\"STRING_LITERAL,yyy\"}},{\"t\":39,\"4\":\"x\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,1.0\"}},{\"t\":39,\"4\":\"y\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,2.0\"}},{\"t\":39,\"4\":\"z\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,3.0\"}}]}}]},{\"t\":33,\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"c\",\"27\":{\"t\":22,\"10\":{\"t\":24,\"3\":\"obj\"},\"11\":{\"t\":24,\"3\":\"i\"}}}]},{\"t\":35,\"18\":{\"t\":30},\"19\":{\"t\":35,\"18\":{\"t\":29},\"19\":{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"},{\"t\":5,\"v\":\"+\"},{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":25,\"8\":\"STRING_LITERAL,!!!\"},{\"t\":24,\"3\":\"i\"},{\"t\":25,\"8\":\"STRING_LITERAL,=\"},{\"t\":24,\"3\":\"c\"}]}},\"25\":{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":24,\"3\":\"c\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,2.0\"}]}},\"25\":{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":24,\"3\":\"i\"},{\"t\":25,\"8\":\"STRING_LITERAL,cde\"}]}},{\"t\":3}]},\"29\":{\"t\":32,\"26\":\"i\",\"28\":{\"t\":24,\"3\":\"obj\"}}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer1 = @"{\"retType\":\"string\",\"retValue\":\"abcdfghijklmnopqrstvw\"}";
+    NSString *answer2 = @"{\"retType\":\"string\",\"retValue\":\"12346789101113\"}";
+    //NSString *answer3 = @"{\"retType\":\"string\",\"retValue\":\"!!!abc=xxx!!!x=1\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result1 = [ex invoke:@"test" with:nil];
+    NSString *actual1 = dictionaryToJSON(result1);
+    if (![actual1 isEqualToString:answer1]) {
+        printf("Test 16-1 failed!\n");
+        printf("Expected : %s\n", [answer1 UTF8String]);
+        printf("Actual : %s\n", [actual1 UTF8String]);
+        return false;
+    }
+    NSMutableDictionary* result2 = [ex invoke:@"test2" with:nil];
+    NSString *actual2 = dictionaryToJSON(result2);
+    if (![actual2 isEqualToString:answer2]) {
+        printf("Test 16-2 failed!\n");
+        printf("Expected : %s\n", [answer2 UTF8String]);
+        printf("Actual : %s\n", [actual2 UTF8String]);
+        return false;
+    }
+    // The order of properties in objects is not guaranteed.
+    /*
+    NSMutableDictionary* result3 = [ex invoke:@"test3" with:nil];
+    NSString *actual3 = dictionaryToJSON(result3);
+    if (![actual3 isEqualToString:answer3]) {
+        printf("Test 16-3 failed!\n");
+        printf("Expected : %s\n", [answer3 UTF8String]);
+        printf("Actual : %s\n", [actual3 UTF8String]);
+        return false;
+    }
+    */
+    
+    printf("Test 16 passed.\n");
+    return true;
+}
+
+@interface test17external : NSObject <JawaExternalCallback>
+@end
+@implementation test17external
+-(NSMutableDictionary*)call:(NSString*)functionName with:(NSDictionary*)argument {
+    if ([functionName isEqualToString:@"LANG2"])
+        return [NSMutableDictionary dictionaryWithDictionary:@{@"value":@"abcdefg"}];
+    else if ([functionName isEqualToString:@"COUNTRY3"])
+        return [NSMutableDictionary dictionaryWithDictionary:@{@"value":@"TAIWAN"}];
+    else if ([functionName isEqualToString:@"ttt"])
+        return [argument objectForKey:@"xxx"];
+    else
+        return nil;
+}
+@end
+
+BOOL test17() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"getAdTag\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"tagUrl\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,http://m.loopme.com?unit=2342342&locale=%%LOCALE%%\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"lang\",\"27\":{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":20,\"10\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,LANG2\"}]},\"12\":{\"t\":24,\"3\":\"extern\"}},\"11\":{\"t\":24,\"3\":\"value\"}},\"11\":{\"t\":24,\"3\":\"toLowerCase\"}}}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"country\",\"27\":{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":20,\"10\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,COUNTRY3\"}]},\"12\":{\"t\":24,\"3\":\"extern\"}},\"11\":{\"t\":24,\"3\":\"value\"}},\"11\":{\"t\":24,\"3\":\"toLowerCase\"}}}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"x\",\"27\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,ttt\"},{\"t\":28,\"6\":[{\"t\":39,\"4\":\"xxx\",\"5\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"hhh\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}}]}}]}]},\"12\":{\"t\":24,\"3\":\"extern\"}}}]},{\"t\":36,\"32\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,%%LOCALE%%\"},{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"},{\"t\":5,\"v\":\"+\"},{\"t\":5,\"v\":\"+\"},{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":24,\"3\":\"lang\"},{\"t\":25,\"8\":\"STRING_LITERAL,_\"},{\"t\":24,\"3\":\"country\"},{\"t\":25,\"8\":\"STRING_LITERAL,_\"},{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"x\"},\"11\":{\"t\":24,\"3\":\"toJSON\"}}}]}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"tagUrl\"},\"11\":{\"t\":24,\"3\":\"replace\"}}}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"http://m.loopme.com?unit=2342342&locale=abcdefg_taiwan_{\\\"hhh\\\":123}\"}";
+    
+    test17external* external = [[test17external alloc]init];
+    [ex registerExternalCallback:external];
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"getAdTag" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 17 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 17 passed.\n");
+    return true;
+}
+
+BOOL test18() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"getAdTag\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"method\",\"5\":{\"t\":25,\"8\":\"STRING_LITERAL,GET\"}},{\"t\":39,\"4\":\"url\",\"5\":{\"t\":25,\"8\":\"STRING_LITERAL,http://s3-ap-northeast-1.amazonaws.com/ce-global-metadata-dev/cdn/adlist/094e05b807c34f228af5531c8f7149b8/TEST/3\"}},{\"t\":39,\"4\":\"type\",\"5\":{\"t\":25,\"8\":\"STRING_LITERAL,JSON\"}}]}}]}},{\"t\":1,\"3\":\"convertResp\",\"23\":[\"data\"],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"count\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,0.0\"}},{\"t\":39,\"4\":\"items\",\"5\":{\"t\":27,\"7\":[]}}]}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"object\",\"retValue\":{\"type\":\"JSON\",\"method\":\"GET\",\"url\":\"http://s3-ap-northeast-1.amazonaws.com/ce-global-metadata-dev/cdn/adlist/094e05b807c34f228af5531c8f7149b8/TEST/3\"}}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"getAdTag" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 18 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 18 passed.\n");
+    return true;
+}
+
+BOOL test19() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test1\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,111.123\"}}]}},{\"t\":1,\"3\":\"test2\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":25,\"8\":\"BOOLEAN,true\"}}]}},{\"t\":1,\"3\":\"test3\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":25,\"8\":\"BOOLEAN,false\"}}]}},{\"t\":1,\"3\":\"test4\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":18,\"13\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,1111111.0\"},\"14\":\"PUNCTUATOR,-\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer1 = @"{\"retType\":\"number\",\"retValue\":111.123}";
+    NSString *answer2 = @"{\"retType\":\"boolean\",\"retValue\":\"true\"}";
+    NSString *answer3 = @"{\"retType\":\"boolean\",\"retValue\":\"false\"}";
+    NSString *answer4 = @"{\"retType\":\"number\",\"retValue\":-1111111}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result1 = [ex invoke:@"test1" with:nil];
+    NSString *actual1 = dictionaryToJSON(result1);
+    if (![actual1 isEqualToString:answer1]) {
+        printf("Test 19-1 failed!\n");
+        printf("Expected : %s\n", [answer1 UTF8String]);
+        printf("Actual : %s\n", [actual1 UTF8String]);
+        return false;
+    }
+    NSMutableDictionary* result2 = [ex invoke:@"test2" with:nil];
+    NSString *actual2 = dictionaryToJSON(result2);
+    if (![actual2 isEqualToString:answer2]) {
+        printf("Test 19-2 failed!\n");
+        printf("Expected : %s\n", [answer2 UTF8String]);
+        printf("Actual : %s\n", [actual2 UTF8String]);
+        return false;
+    }
+    
+    NSMutableDictionary* result3 = [ex invoke:@"test3" with:nil];
+    NSString *actual3 = dictionaryToJSON(result3);
+    if (![actual3 isEqualToString:answer3]) {
+        printf("Test 19-3 failed!\n");
+        printf("Expected : %s\n", [answer3 UTF8String]);
+        printf("Actual : %s\n", [actual3 UTF8String]);
+        return false;
+    }
+    
+    NSMutableDictionary* result4 = [ex invoke:@"test4" with:nil];
+    NSString *actual4 = dictionaryToJSON(result4);
+    if (![actual4 isEqualToString:answer4]) {
+        printf("Test 19-4 failed!\n");
+        printf("Expected : %s\n", [answer4 UTF8String]);
+        printf("Actual : %s\n", [actual4 UTF8String]);
+        return false;
+    }
+    
+    printf("Test 19 passed.\n");
+    return true;
+}
+
+BOOL test20() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed1 = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"getAdTag\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"method\",\"5\":{\"t\":25,\"1\":\"R\",\"8\":\"STRING_LITERAL,GET\"}},{\"t\":39,\"4\":\"url\",\"5\":{\"t\":25,\"1\":\"R\",\"8\":\"STRING_LITERAL,http://s3-ap-northeast-1.amazonaws.com/ce-global-metadata-dev/cdn/adlist/094e05b807c34f228af5531c8f7149b8/TEST/3\"}},{\"t\":39,\"4\":\"type\",\"5\":{\"t\":25,\"1\":\"R\",\"8\":\"STRING_LITERAL,JSON\"}}]}}]}},{\"t\":1,\"3\":\"convertResp\",\"23\":[\"data\"],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"count\",\"5\":{\"t\":25,\"1\":\"R\",\"8\":\"NUMERIC_LITERAL,0.0\"}},{\"t\":39,\"4\":\"items\",\"5\":{\"t\":27,\"7\":[]}}]}}]}}]}";
+    
+    NSDictionary* prog1 = jsonToDictionary(parsed1);
+    NSString *answer0 = @"{\"retType\":\"object\",\"retValue\":{\"type\":\"JSON\",\"method\":\"GET\",\"url\":\"http://s3-ap-northeast-1.amazonaws.com/ce-global-metadata-dev/cdn/adlist/094e05b807c34f228af5531c8f7149b8/TEST/3\"}}";
+    
+    [ex execute:prog1];
+    NSMutableDictionary* result0 = [ex invoke:@"getAdTag" with:nil];
+    NSString *actual0 = dictionaryToJSON(result0);
+    if (![actual0 isEqualToString:answer0]) {
+        printf("Test 20-0 failed!\n");
+        printf("Expected : %s\n", [answer0 UTF8String]);
+        printf("Actual : %s\n", [actual0 UTF8String]);
+        return false;
+    }
+    
+    // Load another program
+    NSString *parsed2 = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test1\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":25,\"1\":\"R\",\"8\":\"NUMERIC_LITERAL,111.123\"}}]}},{\"t\":1,\"3\":\"test2\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":25,\"1\":\"R\",\"8\":\"BOOLEAN,true\"}}]}},{\"t\":1,\"3\":\"test3\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":25,\"1\":\"R\",\"8\":\"BOOLEAN,false\"}}]}},{\"t\":1,\"3\":\"test4\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":18,\"1\":\"R\",\"13\":{\"t\":25,\"1\":\"R\",\"8\":\"NUMERIC_LITERAL,1111111.0\"},\"14\":\"PUNCTUATOR,-\"}}]}}]}";
+    
+    NSDictionary* prog2 = jsonToDictionary(parsed2);
+    [ex execute:prog2];
+
+    NSString *answer1 = @"{\"retType\":\"number\",\"retValue\":111.123}";
+    NSString *answer2 = @"{\"retType\":\"boolean\",\"retValue\":\"true\"}";
+    
+    
+    NSMutableDictionary* result1 = [ex invoke:@"test1" with:nil];
+    NSString *actual1 = dictionaryToJSON(result1);
+    if (![actual1 isEqualToString:answer1]) {
+        printf("Test 20-1 failed!\n");
+        printf("Expected : %s\n", [answer1 UTF8String]);
+        printf("Actual : %s\n", [actual1 UTF8String]);
+        return false;
+    }
+    NSMutableDictionary* result2 = [ex invoke:@"test2" with:nil];
+    NSString *actual2 = dictionaryToJSON(result2);
+    if (![actual2 isEqualToString:answer2]) {
+        printf("Test 20-2 failed!\n");
+        printf("Expected : %s\n", [answer2 UTF8String]);
+        printf("Actual : %s\n", [actual2 UTF8String]);
+        return false;
+    }
+    
+    printf("Test 20 passed.\n");
+    return true;
+}
+
 int main(int argc, char *argv[]) {
     @autoreleasepool {
+        
         if (!test1()) return -1;
         if (!test2()) return -1;
         if (!test3()) return -1;
@@ -177,6 +539,18 @@ int main(int argc, char *argv[]) {
         if (!test6()) return -1;
         if (!test7()) return -1;
         if (!test8()) return -1;
+        if (!test9()) return -1;
+        if (!test10()) return -1;
+        if (!test11()) return -1;
+        if (!test12()) return -1;
+        if (!test13()) return -1;
+        if (!test14()) return -1;
+        if (!test15()) return -1;
+        if (!test16()) return -1;
+        if (!test17()) return -1;
+        if (!test18()) return -1;
+        if (!test19()) return -1;
+        if (!test20()) return -1;
     }
     return 0;
 }

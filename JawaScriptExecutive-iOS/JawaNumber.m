@@ -21,6 +21,7 @@
 }
 
 -(NSString*) description {
+    
     if (fabs(self.value-round(self.value)) < QUANTUM) {
         return [NSString stringWithFormat:@"%ld", (long)self.value];
     }

@@ -13,6 +13,13 @@
 
 NSMutableDictionary* arrayPrototype;
 
+NSInteger compare(JawaObjectRef* o1, JawaObjectRef* o2, void* context) {
+    NSArray* ctxt = (__bridge NSArray*)context;
+    JawaExecutor* ex = [ctxt objectAtIndex:0];
+    JawaObjectRef* comparator = [ctxt objectAtIndex:1];
+    return [ex compare:o1 and:o2 with:comparator];
+}
+
 @implementation JawaArray
 
 -(id)initIn:(JawaExecutor *)ex {
@@ -24,6 +31,7 @@ NSMutableDictionary* arrayPrototype;
     }
     return self;
 }
+
 
 -(NSString*)description {
     BOOL first = true;
@@ -47,7 +55,7 @@ NSMutableDictionary* arrayPrototype;
         if (!first)
             [ret appendString:@","];
         first = false;
-        if ([obj.object isMemberOfClass:[NSMutableString class]]) {
+        if ([obj.object isKindOfClass:[NSString class]]) {
             [ret appendString:@"\""];
             NSString* r = [[obj description] stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
             [ret appendString:r];
@@ -85,15 +93,15 @@ NSMutableDictionary* arrayPrototype;
             JawaObjectRef* start = [[self.executor.currentActivation lastObject]objectForKey:@"start"];
             if (![start.object isMemberOfClass:[JawaNumber class]])
                 [NSException raise:@"JawaScript Runtime Exception" format:@"start of slice() must be a number"];
-            NSUInteger startInt = ((NSNumber*)start.object).unsignedIntValue;
+            NSUInteger startInt = ((JawaNumber*)start.object).unsignedIntValue;
             if (startInt >= self.elements.count)
                 [NSException raise:@"JawaScript Runtime Exception" format:@"start of slice() out of bound"];
             NSUInteger endInt = self.elements.count;
             JawaObjectRef* end = [[self.executor.currentActivation lastObject]objectForKey:@"end"];
             if (end != nil) {
-                if (![end.object isKindOfClass:[NSNumber class]])
+                if (![end.object isMemberOfClass:[JawaNumber class]])
                     [NSException raise:@"JawaScript Runtime Exception" format:@"end of slice() must be a number"];
-                endInt = ((NSNumber*)end.object).unsignedIntValue;
+                endInt = ((JawaNumber*)end.object).unsignedIntValue;
                 if (endInt > self.elements.count)
                     [NSException raise:@"JawaScript Runtime Exception" format:@"end of slice() out of bound"];
             }
@@ -118,6 +126,56 @@ NSMutableDictionary* arrayPrototype;
                 [ret appendString:[o description]];
             }
             return [JawaObjectRef RefWithString:ret in:self.executor];
+        }
+        // Array.pop()
+        case 3: {
+            if (self.elements.count <= 0)
+                return nil;
+            JawaObjectRef* ret = [self.elements pointerAtIndex:self.elements.count - 1];
+            [self.elements removePointerAtIndex:self.elements.count - 1];
+            return ret;
+        }
+        // Array.push(item)
+        case 4: {
+            JawaObjectRef* item = [[self.executor.currentActivation lastObject]objectForKey:@"item"];
+            [self.elements addPointer:(__bridge void*)item];
+            return [JawaObjectRef RefWithNumber:self.elements.count in:self.executor];
+        }
+        // Array.reverse()
+        case 5: {
+            NSUInteger n = self.elements.count;
+            for (NSUInteger i = 0 ; i < n / 2 ; i++) {
+                void *t = [self.elements pointerAtIndex:i];
+                [self.elements replacePointerAtIndex:i withPointer:[self.elements pointerAtIndex:n - i - 1]];
+                [self.elements replacePointerAtIndex:n - i - 1 withPointer:t];
+            }
+            return [JawaObjectRef RefWithJawaArray:self];
+        }
+        // Array.shift()
+        case 6: {
+            if (self.elements.count <= 0)
+                return nil;
+            JawaObjectRef* item = [self.elements pointerAtIndex:0];
+            [self.elements removePointerAtIndex:0];
+            return item;
+        }
+        // Array.sort(compareFunction)
+        case 7: {
+            JawaObjectRef* compareFunction = [[self.executor.currentActivation lastObject]objectForKey:@"compareFunction"];
+            if (compareFunction == nil)
+                compareFunction = [JawaObjectRef RefIn:self.executor];
+            NSArray* tempArray = self.elements.allObjects;
+            NSArray* sorted = [tempArray sortedArrayUsingFunction:compare context:(__bridge void * _Nullable)(@[self.executor, compareFunction])];
+            for (NSUInteger i = 0 ; i < sorted.count ; i++) {
+                [self.elements replacePointerAtIndex:i withPointer:(__bridge void * _Nullable)([sorted objectAtIndex:i])];
+            }
+            return [JawaObjectRef RefWithJawaArray:self];
+        }
+        // Array.unshift()
+        case 8: {
+            JawaObjectRef* item = [[self.executor.currentActivation lastObject]objectForKey:@"item"];
+            [self.elements insertPointer:(__bridge void*)item atIndex:0];
+            return [JawaObjectRef RefWithNumber:self.elements.count in:self.executor];
         }
         default:
             [NSException raise:@"JavaScript Runtime Exception" format:@"%@ not implemented yet", funcName];

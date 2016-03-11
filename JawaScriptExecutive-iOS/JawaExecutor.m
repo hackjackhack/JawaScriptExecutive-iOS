@@ -29,7 +29,6 @@ NSMutableDictionary* builtinFunctions;
         [_activations addObject:_currentActivation];
         _currentIterationScope = nil;
         _isFromCallExpression = false;
-        // TODO: Add externalCallback
         
         NULL_CONSTANT = [JawaObjectRef RefIn:self];
         
@@ -40,17 +39,40 @@ NSMutableDictionary* builtinFunctions;
         objectPrototype = [[NSMutableDictionary alloc]init];
         builtinFunctions = [[NSMutableDictionary alloc]init];
         
+        // Built-in functions
         [self registerBuilitinFunc:builtinFunctions funcName:@"alert" params:@[@"msg"]];
+        [self registerBuilitinFunc:builtinFunctions funcName:@"getenv" params:@[@"varname"]];
+        [self registerBuilitinFunc:builtinFunctions funcName:@"extern" params:@[@"functionName", @"argument"]];
+        [self registerBuilitinFunc:builtinFunctions funcName:@"parseInt" params:@[@"string", @"radix"]];
         for (NSString* name in builtinFunctions) {
             JawaFunc* f = [builtinFunctions objectForKey:name];
             [self.global setObject:[JawaObjectRef RefWithJawaFunc:f] forKey:name];
         }
         
+        // Array prototype
         [self registerBuilitinProp:arrayPrototype propName:@"length"];
         [self registerBuilitinFunc:arrayPrototype funcName:@"slice" params:@[@"start", @"end"]];
         [self registerBuilitinFunc:arrayPrototype funcName:@"join" params:@[@"sep"]];
+        [self registerBuilitinFunc:arrayPrototype funcName:@"pop" params:@[]];
+        [self registerBuilitinFunc:arrayPrototype funcName:@"push" params:@[@"item"]];
+        [self registerBuilitinFunc:arrayPrototype funcName:@"reverse" params:@[]];
+        [self registerBuilitinFunc:arrayPrototype funcName:@"shift" params:@[]];
+        [self registerBuilitinFunc:arrayPrototype funcName:@"sort" params:@[@"compareFunction"]];
+        [self registerBuilitinFunc:arrayPrototype funcName:@"unshift" params:@[@"item"]];
         
+        // String prototype
         [self registerBuilitinFunc:stringPrototype funcName:@"split" params:@[@"delim"]];
+        [self registerBuilitinProp:stringPrototype propName:@"length"];
+        [self registerBuilitinFunc:stringPrototype funcName:@"substring" params:@[@"begin", @"end"]];
+        [self registerBuilitinFunc:stringPrototype funcName:@"toLowerCase" params:@[]];
+        [self registerBuilitinFunc:stringPrototype funcName:@"replace" params:@[@"searchvalue", @"newvalue"]];
+        [self registerBuilitinFunc:stringPrototype funcName:@"charCodeAt" params:@[@"index"]];
+        [self registerBuilitinFunc:stringPrototype funcName:@"indexOf" params:@[@"searchvalue", @"start"]];
+        [self registerBuilitinFunc:stringPrototype funcName:@"lastIndexOf" params:@[@"searchvalue", @"start"]];
+        [self registerBuilitinFunc:stringPrototype funcName:@"trim" params:@[]];
+        
+        // Object prototype
+        [self registerBuilitinFunc:objectPrototype funcName:@"toJSON" params:@[]];
     }
     return self;
 }
@@ -68,6 +90,68 @@ NSMutableDictionary* builtinFunctions;
             else
                 printf("%s\n", [[msg description]cStringUsingEncoding:NSUTF8StringEncoding]);
             return nil;
+        }
+        // getenv(varname)
+        case 1: {
+            NSString* varname = [[[self.currentActivation lastObject]objectForKey:@"varname"]description];
+            if ([self.env objectForKey:varname] != nil) {
+                return [self toJawa:[self.env objectForKey:varname]];
+            } else
+                return nil;
+        }
+        // extern(functionName, argument)
+        case 2: {
+            NSString* functionName = [[[self.currentActivation lastObject]objectForKey:@"functionName"]description];
+            JawaObjectRef* arg = [[self.currentActivation lastObject]objectForKey:@"argument"];
+            NSMutableDictionary* argJSON = nil;
+            if (arg != nil) {
+                if (![arg.object isMemberOfClass:[JawaObject class]])
+                    [NSException raise:@"JawaScript Runtime Exception" format:@"The argument for extern() must be an object"];
+                argJSON = jsonToDictionary([[(JawaObject*)arg.object toJSON:nil]description]);
+            }
+            return [self toJawaObject:[self.externalCallback call:functionName with: argJSON]];
+        }
+        // parseInt(string, radix)
+        case 3: {
+            NSString* str = [[[[[self.currentActivation lastObject]objectForKey:@"string"]description]stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]lowercaseString];
+            if (str.length == 0)
+                return [JawaObjectRef RefWithNumber:0 in:self];
+            
+            // Sign
+            int sign = 1;
+            unichar sc = [str characterAtIndex:0];
+            if (sc == '+' || sc == '-') {
+                sign = (sc == '+' ? 1 : -1);
+                str = [str substringFromIndex:1];
+            }
+            
+            // Radix
+            int radix = 10;
+            JawaObjectRef* arg2 = [[self.currentActivation lastObject]objectForKey:@"radix"];
+            if (arg2 != nil && [arg2.object isMemberOfClass:[JawaNumber class]])
+                radix = ((JawaNumber*)arg2.object).intValue;
+            else if (str.length >= 2 && ([str hasPrefix:@"0x"] || [str hasPrefix:@"0X"])) {
+                radix = 16;
+                str = [str substringFromIndex:2];
+            }
+            
+            // Conversion
+            if (radix > 36)
+                [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid radix : %d", radix];
+            int end;
+            for (end = 0 ; end < str.length ; end++) {
+                unichar c = [str characterAtIndex:end];
+                if (c >= '0' && c <= '9') c -= '0';
+                else if (c >= 'a' && c <= 'z') c = c - 'a' + 10;
+                else break;
+                if (c >= radix) break;
+            }
+            str = [str substringToIndex:end];
+            if (str.length == 0)
+                return [JawaObjectRef RefWithNumber:0 in:self];
+            
+            long v = strtol([str cStringUsingEncoding:NSUTF8StringEncoding], NULL, radix);
+            return [JawaObjectRef RefWithNumber:v in:self];
         }
         default:
             [NSException raise:@"JawaScript Runtime Exception" format:@"Builtin function not found: %@", funcName];
@@ -114,7 +198,7 @@ NSMutableDictionary* builtinFunctions;
         [retJSON setObject:@"number" forKey:@"retType"];
         double d = ((JawaNumber*)ret.object).value;
         [retJSON setObject:[NSNumber numberWithDouble:d] forKey:@"retValue"];
-    } else if ([ret.object isMemberOfClass:[NSNumber class]]) {
+    } else if ([ret.object isKindOfClass:[NSNumber class]]) {
         [retJSON setObject:@"boolean" forKey:@"retType"];
         NSNumber *n = (NSNumber*)ret.object;
         [retJSON
@@ -123,6 +207,38 @@ NSMutableDictionary* builtinFunctions;
     }
     
     return retJSON;
+}
+
+-(NSInteger)compare:(JawaObjectRef*)o1 and:(JawaObjectRef*)o2 with:(JawaObjectRef*)comparator {
+    if (comparator != nil && comparator.object != nil) {
+        if (![comparator.object isMemberOfClass:[JawaFunc class]])
+            [NSException raise:@"JawaScript Runtime Exception" format:@"Comparator must be a function"];
+        JawaFunc* compFunc = ((JawaFunc*)comparator.object);
+        NSMutableDictionary* scope = [[NSMutableDictionary alloc]init];
+        [scope setObject:o1 forKey:[compFunc.params objectAtIndex:0]];
+        [scope setObject:o2 forKey:[compFunc.params objectAtIndex:1]];
+        NSMutableArray* activation = [[NSMutableArray alloc]init];
+        [activation addObject:scope];
+        bool oldIsFromCallExpression = self.isFromCallExpression;
+        self.isFromCallExpression = true;
+        [self.activations addObject:activation];
+        self.currentActivation = activation;
+        
+        JawaObjectRef* ret = [compFunc apply];
+        if (![ret.object isMemberOfClass:[JawaNumber class]])
+            [NSException raise:@"JawaScript Runtime Exception" format:@"The return value of a comparator must be a number"];
+        NSInteger compResult = ((JawaNumber*)ret.object).intValue;
+        [self.activations removeLastObject];
+        self.currentActivation = [self.activations lastObject];
+        self.isFromCallExpression = oldIsFromCallExpression;
+        return compResult;
+    } else {
+        return [[o1 description] compare:[o2 description]];
+    }
+}
+
+-(void)registerExternalCallback:(id<JawaExternalCallback>)cb {
+    self.externalCallback = cb;
 }
 
 -(int)toInteger:(JawaObjectRef*)o {
@@ -134,6 +250,37 @@ NSMutableDictionary* builtinFunctions;
     }
     [NSException raise:@"JawaScript Runtime Exception" format:@"Not yet implemented conversion"];
     return -1;
+}
+
+-(JawaObjectRef*)toJawa:(NSObject*)obj {
+    if ([obj isKindOfClass:[NSDictionary class]]) {
+        return [self toJawaObject:(NSDictionary*)obj];
+    } else if ([obj isKindOfClass:[NSArray class]]) {
+        return [self toJawaArray:(NSArray*)obj];
+    } else if ([obj isKindOfClass:[NSString class]]) {
+        return [JawaObjectRef RefWithString:(NSString*)obj in:self];
+    } else if ([obj isKindOfClass:[NSNumber class]]) {
+        double d = ((NSNumber*)obj).doubleValue;
+        return [JawaObjectRef RefWithNumber:d in:self];
+    }
+    return nil;
+}
+
+-(JawaObjectRef*)toJawaObject:(NSDictionary*)dict {
+    JawaObject* jawaObj = [[JawaObject alloc]initIn:self];
+    for (NSString* key in dict) {
+        NSObject* val = [dict objectForKey:key];
+        [jawaObj setProp:key with:[self toJawa:val]];
+    }
+    return [JawaObjectRef RefWithJawaObject:jawaObj];
+}
+
+-(JawaObjectRef*)toJawaArray:(NSArray*)array {
+    JawaArray* jawaArr = [[JawaArray alloc]initIn:self];
+    for (NSObject* e in array) {
+        [jawaArr append:[self toJawa:e]];
+    }
+    return [JawaObjectRef RefWithJawaArray:jawaArr];
 }
 
 -(JawaObjectRef*)evalInExpression:(NSDictionary*)ast {
@@ -150,8 +297,8 @@ NSMutableDictionary* builtinFunctions;
         bool found;
         if ([secondOprnd.object isMemberOfClass:[JawaArray class]]) {
             JawaArray* arr = ((JawaArray*)secondOprnd.object);
-            if ([firstOprnd.object isKindOfClass:[NSNumber class]]) {
-                double value = ((NSNumber*)firstOprnd.object).doubleValue;
+            if ([firstOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                double value = ((JawaNumber*)firstOprnd.object).doubleValue;
                 if (fabs(round(value) - value) < QUANTUM) {
                     int index = (int)round(value);
                     found = index >= 0 && index < arr.elements.count;
@@ -361,7 +508,7 @@ NSMutableDictionary* builtinFunctions;
                 JawaNumber* l = (JawaNumber*)firstOprnd.object;
                 JawaNumber* r = (JawaNumber*)secondOprnd.object;
                 result = l.doubleValue == r.doubleValue;
-            } else if([firstOprnd.object isMemberOfClass:[NSNumber class]] && [secondOprnd.object isMemberOfClass:[NSNumber class]]) {
+            } else if([firstOprnd.object isKindOfClass:[NSNumber class]] && [secondOprnd.object isKindOfClass:[NSNumber class]]) {
                 NSNumber* l = (NSNumber*)firstOprnd.object;
                 NSNumber* r = (NSNumber*)secondOprnd.object;
                 result = l.boolValue == r.boolValue;
@@ -383,7 +530,7 @@ NSMutableDictionary* builtinFunctions;
         JawaObjectRef* oprnd = [self evaluate:expr];
         if (oprnd == nil ||
             ([oprnd.object isMemberOfClass:[JawaNumber class]] && ((JawaNumber*)oprnd.object).doubleValue == 0) ||
-            ([oprnd.object isMemberOfClass:[NSNumber class]] && !((NSNumber*)oprnd.object).boolValue) ||
+            ([oprnd.object isKindOfClass:[NSNumber class]] && !((NSNumber*)oprnd.object).boolValue) ||
             ([oprnd.object isKindOfClass:[NSString class]] && ((NSString*)oprnd.object).length == 0))
             return oprnd;
     }
@@ -396,7 +543,7 @@ NSMutableDictionary* builtinFunctions;
         JawaObjectRef* oprnd = [self evaluate:expr];
         if (oprnd == nil ||
             ([oprnd.object isMemberOfClass:[JawaNumber class]] && ((JawaNumber*)oprnd.object).doubleValue != 0) ||
-            ([oprnd.object isMemberOfClass:[NSNumber class]] && ((NSNumber*)oprnd.object).boolValue) ||
+            ([oprnd.object isKindOfClass:[NSNumber class]] && ((NSNumber*)oprnd.object).boolValue) ||
             ([oprnd.object isKindOfClass:[NSString class]] && ((NSString*)oprnd.object).length > 0) ||
             ([oprnd.object isMemberOfClass:[JawaFunc class]]) ||
             ([oprnd.object isMemberOfClass:[JawaArray class]]) ||
@@ -436,11 +583,11 @@ NSMutableDictionary* builtinFunctions;
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for /"];
         } else if ([op isEqualToString:@"%"]) {
             if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
-                int l = ((JawaNumber*)firstOprnd.object).intValue;
-                int r = ((JawaNumber*)secondOprnd.object).intValue;
+                double l = ((JawaNumber*)firstOprnd.object).doubleValue;
+                double r = ((JawaNumber*)secondOprnd.object).doubleValue;
                 if (r == 0)
                     [NSException raise:@"JawaScript Runtime Exception" format:@"Divided by zero"];
-                firstOprnd = [JawaObjectRef RefWithNumber:l % r in:self];
+                firstOprnd = [JawaObjectRef RefWithNumber:fmod(l,r) in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for /"];
         } else
@@ -599,7 +746,7 @@ NSMutableDictionary* builtinFunctions;
                     left.object = [JawaNumber numberWithDouble:l / r];
                     break;
                 case '%':
-                    left.object = [JawaNumber numberWithDouble:(long)l % (long)r];
+                    left.object = [JawaNumber numberWithDouble:fmod(l, r)];
                     break;
             }
         } else {

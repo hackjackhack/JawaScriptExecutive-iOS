@@ -30,5 +30,7 @@ NSMutableDictionary* jsonToDictionary(NSString* str) {
 NSString* dictionaryToJSON(NSDictionary* dict) {
     NSError *error;
     NSData *data = [NSJSONSerialization dataWithJSONObject:dict options:kNilOptions error:&error];
-    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    
+    NSString* json = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    return [json stringByReplacingOccurrencesOfString:@"\\/" withString:@"/"];
 }
