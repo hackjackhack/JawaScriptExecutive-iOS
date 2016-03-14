@@ -205,8 +205,49 @@ NSMutableDictionary* builtinFunctions;
          setObject:n.boolValue ? @"true" : @"false"
          forKey:@"retValue"];
     }
+    //printf("%lu objects are in pool.\n", jawaObjectPool.count);
+    [self gc];
     
     return retJSON;
+}
+
+-(void)gc {
+    for (JawaObjectRef* obj in jawaObjectPool) {
+        obj.marked = false;
+        obj.discovered = false;
+    }
+    for (NSString* key in self.global) {
+        JawaObjectRef *objRef = [self.global objectForKey:key];
+        [self markAndTraverse:objRef];
+    }
+    
+    NSMutableArray *markedObj = [NSMutableArray array];
+    for (JawaObjectRef* obj in jawaObjectPool) {
+        if (obj.marked)
+            [markedObj addObject:obj];
+    }
+    //printf("%lu objects recycled.\n", jawaObjectPool.count - markedObj.count);
+    [jawaObjectPool setArray:markedObj];
+}
+
+-(void)markAndTraverse:(JawaObjectRef*)objRef {
+    objRef.marked = true;
+    objRef.discovered = true;
+    
+    if ([objRef.object isMemberOfClass:[JawaArray class]]) {
+        JawaArray* arr = ((JawaArray*)objRef.object);
+        for (JawaObjectRef* elementRef in arr.elements) {
+            if (!elementRef.discovered)
+                [self markAndTraverse:elementRef];
+        }
+    } else if ([objRef.object isMemberOfClass:[JawaObject class]]) {
+        JawaObject* obj = ((JawaObject*)objRef.object);
+        for (NSString* key in obj.properties) {
+            JawaObjectRef *elementRef = [obj.properties objectForKey:key];
+            if (!elementRef.discovered)
+                [self markAndTraverse:elementRef];
+        }
+    }
 }
 
 -(NSInteger)compare:(JawaObjectRef*)o1 and:(JawaObjectRef*)o2 with:(JawaObjectRef*)comparator {

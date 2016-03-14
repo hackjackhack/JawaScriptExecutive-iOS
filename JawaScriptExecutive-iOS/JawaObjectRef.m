@@ -14,6 +14,7 @@
 #import "JawaObjectRef.h"
 
 NSMutableArray* jawaObjectPool;
+int release_count;
 
 @implementation JawaObjectRef
 
@@ -124,6 +125,7 @@ NSMutableArray* jawaObjectPool;
         return self.object;
 }
 -(void)dealloc {
+    release_count++;
     //printf("Releasing %s\n", [NSStringFromClass([self class]) cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 

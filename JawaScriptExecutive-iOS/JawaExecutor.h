@@ -12,7 +12,7 @@
 #import "JawaExternalCallback.h"
 
 extern NSMutableDictionary* builtinFunctions;
-
+extern int release_count;
 @class JawaObjectRef;
 
 

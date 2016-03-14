@@ -16,12 +16,14 @@
 @class JawaObject;
 
 extern NSMutableArray* jawaObjectPool;
-
+extern int release_count;
 @interface JawaObjectRef : NSObject
 {
 
 }
 
+@property bool marked;
+@property bool discovered;
 @property (strong) NSObject* object;
 @property (weak) JawaObjectRef* appliedOn;
 @property (weak) JawaExecutor* executor;

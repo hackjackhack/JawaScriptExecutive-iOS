@@ -866,6 +866,7 @@ int main(int argc, char *argv[]) {
         if (!test33()) return -1;
         if (!test34()) return -1;
     }
+    //printf("%d\n", release_count);
     return 0;
 }
 
