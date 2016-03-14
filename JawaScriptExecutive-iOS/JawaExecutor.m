@@ -1177,7 +1177,7 @@ NSMutableDictionary* builtinFunctions;
         JawaObjectRef* retValue = [self evaluate:[ast objectForKey:PR_argument]];
         [self placeReturn:retValue];
     } else
-        [self placeReturn:nil];
+        [self placeReturn:[JawaObjectRef RefIn:self]];
     return nil;
 }
 

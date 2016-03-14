@@ -528,6 +528,306 @@ BOOL test20() {
     return true;
 }
 
+BOOL test21() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"ret\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,10\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,10.00\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,10.33\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,34 45 66\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL, 60 \"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,40 years\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,He was 40\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,10\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,10.0\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,010\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,10\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,8.0\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,0x10\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"ret\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,10\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,16.0\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}},{\"t\":25,\"8\":\"STRING_LITERAL,||\"}]}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"ret\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"10||10||10||34||60||40||0||10||10||8||16||16||\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 21 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 21 passed.\n");
+    return true;
+}
+
+BOOL test22() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"xxx\",\"5\":{\"t\":27,\"7\":[]}},{\"t\":39,\"4\":\"yyy\",\"5\":{\"t\":25,\"8\":\"STRING_LITERAL,\\\"\"}}]}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"object\",\"retValue\":{\"xxx\":[],\"yyy\":\"\\\"\"}}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 22 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 22 passed.\n");
+    return true;
+}
+
+BOOL test23() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,11111\"}]},\"12\":{\"t\":24,\"3\":\"alert\"}},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"result\",\"27\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,result\"}]},\"12\":{\"t\":24,\"3\":\"getLocal\"}}}]},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,IT SHOULD BE HERE!\"}]},\"12\":{\"t\":24,\"3\":\"alert\"}}]}},{\"t\":1,\"3\":\"getLocal\",\"23\":[\"key\"],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"result\",\"27\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":24,\"3\":\"key\"}]},\"12\":{\"t\":24,\"3\":\"getenv\"}}}]},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":24,\"3\":\"key\"}]},\"12\":{\"t\":24,\"3\":\"alert\"}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":24,\"3\":\"result\"}]},\"12\":{\"t\":24,\"3\":\"alert\"}},{\"t\":36,\"32\":{\"t\":6,\"17\":{\"t\":12,\"15\":[{\"t\":5,\"v\":\"!=\"}],\"16\":[{\"t\":24,\"3\":\"result\"},{\"t\":25,\"8\":\"NULL,null\"}]},\"18\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"result\"},\"11\":{\"t\":24,\"3\":\"value\"}},\"19\":{\"t\":25,\"8\":\"NULL,null\"}}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:@{@"value":@"OK"}];
+    NSMutableDictionary *param = [[NSMutableDictionary alloc]init];
+    [param setObject:result forKey:@"result"];
+    [ex execute:prog];
+    [ex invoke:@"test" with:param];
+    return true;
+}
+
+BOOL test24() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"null\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 24 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 24 passed.\n");
+    return true;
+}
+
+BOOL test25() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,adlist\"}]},\"12\":{\"t\":24,\"3\":\"getenv\"}}]},\"12\":{\"t\":24,\"3\":\"alert\"}},{\"t\":36,\"32\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,adlist\"}]},\"12\":{\"t\":24,\"3\":\"getenv\"}}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"object\",\"retValue\":{\"items\":[],\"count\":0,\"server_time\":14526909807}}";
+    
+    NSMutableDictionary* adlist = [NSMutableDictionary dictionaryWithDictionary: @{@"server_time":@14526909807.0}];
+    [adlist setObject:@0 forKey:@"count"];
+    [adlist setObject:@[] forKey:@"items"];
+    NSMutableDictionary* param = [NSMutableDictionary dictionaryWithDictionary:@{@"adlist": adlist}];
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:param];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 25 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 25 passed.\n");
+    return true;
+}
+
+BOOL test26() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"o\",\"27\":{\"t\":28,\"6\":[]}}]},{\"t\":5,\"14\":\"PUNCTUATOR,=\",\"20\":{\"t\":22,\"10\":{\"t\":24,\"3\":\"o\"},\"11\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}},\"21\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,456.0\"}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"o\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"object\",\"retValue\":{\"123\":456}}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 26 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 26 passed.\n");
+    return true;
+}
+
+BOOL test27() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"o\",\"27\":{\"t\":28,\"6\":[]}}]},{\"t\":5,\"14\":\"PUNCTUATOR,=\",\"20\":{\"t\":22,\"10\":{\"t\":24,\"3\":\"o\"},\"11\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}},\"21\":{\"t\":27,\"7\":[{\"t\":25,\"8\":\"STRING_LITERAL,XXXXX\"}]}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"o\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"object\",\"retValue\":{\"123\":[\"XXXXX\"]}}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 27 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 27 passed.\n");
+    return true;
+}
+
+BOOL test28() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"o\",\"27\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"kkk\",\"5\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"aaa\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}},{\"t\":39,\"4\":\"bbb\",\"5\":{\"t\":27,\"7\":[{\"t\":28,\"6\":[{\"t\":39,\"4\":\"lala\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,456.0\"}}]}]}}]}}]}}]},{\"t\":5,\"14\":\"PUNCTUATOR,=\",\"20\":{\"t\":22,\"10\":{\"t\":24,\"3\":\"o\"},\"11\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}},\"21\":{\"t\":27,\"7\":[{\"t\":25,\"8\":\"STRING_LITERAL,XXXXX\"}]}},{\"t\":36,\"32\":{\"t\":21,\"2\":{\"t\":26,\"2\":[]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"o\"},\"11\":{\"t\":24,\"3\":\"toJSON\"}}}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"{\\\"123\\\":[\\\"XXXXX\\\"],\\\"kkk\\\":{\\\"aaa\\\":123,\\\"bbb\\\":[{\\\"lala\\\":456}]}}\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 28 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 28 passed.\n");
+    return true;
+}
+
+BOOL test29() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,lala\"}]},\"12\":{\"t\":24,\"3\":\"getenv\"}}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"array\",\"retValue\":[1,2,3]}";
+    
+    NSMutableArray* adlist = [NSMutableArray arrayWithArray: @[@1,@2,@3]];
+    NSMutableDictionary* param = [NSMutableDictionary dictionaryWithDictionary:@{@"lala": adlist}];
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:param];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 29 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 29 passed.\n");
+    return true;
+}
+
+BOOL test30() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":36,\"32\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":25,\"8\":\"STRING_LITERAL,/\"}]},\"12\":{\"t\":20,\"10\":{\"t\":27,\"7\":[{\"t\":25,\"8\":\"STRING_LITERAL,aaa\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,1.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,2.0\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,3.0\"}]},\"11\":{\"t\":24,\"3\":\"join\"}}}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"aaa/1/2/3\"}";
+    
+    NSMutableArray* adlist = [NSMutableArray arrayWithArray: @[@1,@2,@3]];
+    NSMutableDictionary* param = [NSMutableDictionary dictionaryWithDictionary:@{@"lala": adlist}];
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:param];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 30 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 30 passed.\n");
+    return true;
+}
+
+BOOL test31() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"a\",\"27\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,1.2345678998712E13\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"b\",\"27\":{\"t\":17,\"15\":[{\"t\":5,\"v\":\"/\"}],\"16\":[{\"t\":24,\"3\":\"a\"},{\"t\":25,\"8\":\"NUMERIC_LITERAL,1000.0\"}]}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"c\",\"27\":{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":24,\"3\":\"b\"}]},\"12\":{\"t\":24,\"3\":\"parseInt\"}}}]},{\"t\":36,\"32\":{\"t\":24,\"3\":\"c\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"number\",\"retValue\":12345678998}";
+    
+    NSMutableArray* adlist = [NSMutableArray arrayWithArray: @[@1,@2,@3]];
+    NSMutableDictionary* param = [NSMutableDictionary dictionaryWithDictionary:@{@"lala": adlist}];
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:param];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 31 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 31 passed.\n");
+    return true;
+}
+
+BOOL test32() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"a\",\"27\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"abc\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}}]}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"r\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"r\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":20,\"10\":{\"t\":24,\"3\":\"a\"},\"11\":{\"t\":24,\"3\":\"def\"}},{\"t\":25,\"8\":\"NULL,null\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,|\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"r\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"!=\"}],\"16\":[{\"t\":20,\"10\":{\"t\":24,\"3\":\"a\"},\"11\":{\"t\":24,\"3\":\"def\"}},{\"t\":25,\"8\":\"NULL,null\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,|\"}]}},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"answer\",\"27\":{\"t\":25,\"8\":\"NULL,null\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"o\",\"27\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"def\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,111.0\"}}]}}]},{\"t\":35,\"18\":{\"t\":2,\"0\":[{\"t\":5,\"14\":\"PUNCTUATOR,=\",\"20\":{\"t\":24,\"3\":\"answer\"},\"21\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"o\"},\"11\":{\"t\":24,\"3\":\"def\"}}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"r\"},\"21\":{\"t\":24,\"3\":\"answer\"}}]},\"25\":{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":20,\"10\":{\"t\":24,\"3\":\"o\"},\"11\":{\"t\":24,\"3\":\"abc\"}},{\"t\":25,\"8\":\"NULL,null\"}]}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"r\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"true|false|111\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 32 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 32 passed.\n");
+    return true;
+}
+
+BOOL test33() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"a\",\"27\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"abc\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,123.0\"}}]}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"r\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"r\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":20,\"10\":{\"t\":24,\"3\":\"a\"},\"11\":{\"t\":24,\"3\":\"def\"}},{\"t\":25,\"8\":\"NULL,null\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,|\"}]}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"r\"},\"21\":{\"t\":16,\"15\":[{\"t\":5,\"v\":\"+\"}],\"16\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"!=\"}],\"16\":[{\"t\":20,\"10\":{\"t\":24,\"3\":\"a\"},\"11\":{\"t\":24,\"3\":\"def\"}},{\"t\":25,\"8\":\"NULL,null\"}]},{\"t\":25,\"8\":\"STRING_LITERAL,|\"}]}},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"answer\",\"27\":{\"t\":25,\"8\":\"NULL,null\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"o\",\"27\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"def\",\"5\":{\"t\":25,\"8\":\"NUMERIC_LITERAL,111.0\"}}]}}]},{\"t\":35,\"18\":{\"t\":2,\"0\":[{\"t\":5,\"14\":\"PUNCTUATOR,=\",\"20\":{\"t\":24,\"3\":\"answer\"},\"21\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"o\"},\"11\":{\"t\":24,\"3\":\"def\"}}},{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"r\"},\"21\":{\"t\":24,\"3\":\"answer\"}}]},\"25\":{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":20,\"10\":{\"t\":24,\"3\":\"o\"},\"11\":{\"t\":24,\"3\":\"abc\"}},{\"t\":25,\"8\":\"NULL,null\"}]}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"r\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"true|false|111\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 33 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 33 passed.\n");
+    return true;
+}
+
+BOOL test34() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"a\",\"27\":{\"t\":25,\"8\":\"NULL,null\"}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"r\",\"27\":{\"t\":25,\"8\":\"STRING_LITERAL,\"}}]},{\"t\":35,\"18\":{\"t\":2,\"0\":[{\"t\":5,\"14\":\"PUNCTUATOR,+=\",\"20\":{\"t\":24,\"3\":\"r\"},\"21\":{\"t\":25,\"8\":\"STRING_LITERAL,xxx\"}}]},\"25\":{\"t\":7,\"16\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":24,\"3\":\"a\"},{\"t\":25,\"8\":\"NULL,null\"}]},{\"t\":25,\"8\":\"BOOLEAN,false\"}]}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"r\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    NSString *answer = @"{\"retType\":\"string\",\"retValue\":\"xxx\"}";
+    
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 34 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 34 passed.\n");
+    return true;
+}
+
 int main(int argc, char *argv[]) {
     @autoreleasepool {
         
@@ -551,6 +851,20 @@ int main(int argc, char *argv[]) {
         if (!test18()) return -1;
         if (!test19()) return -1;
         if (!test20()) return -1;
+        if (!test21()) return -1;
+        if (!test22()) return -1;
+        if (!test23()) return -1;
+        if (!test24()) return -1;
+        if (!test25()) return -1;
+        if (!test26()) return -1;
+        if (!test27()) return -1;
+        if (!test28()) return -1;
+        if (!test29()) return -1;
+        if (!test30()) return -1;
+        if (!test31()) return -1;
+        if (!test32()) return -1;
+        if (!test33()) return -1;
+        if (!test34()) return -1;
     }
     return 0;
 }
