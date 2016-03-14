@@ -15,7 +15,6 @@
 @class JawaFunc;
 @class JawaObject;
 
-extern NSMutableArray* jawaObjectPool;
 extern int release_count;
 @interface JawaObjectRef : NSObject
 {
@@ -24,6 +23,7 @@ extern int release_count;
 
 @property bool marked;
 @property bool discovered;
+@property int obj_id;
 @property (strong) NSObject* object;
 @property (weak) JawaObjectRef* appliedOn;
 @property (weak) JawaExecutor* executor;

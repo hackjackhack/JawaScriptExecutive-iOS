@@ -828,9 +828,20 @@ BOOL test34() {
     return true;
 }
 
+BOOL test35() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"a\",\"27\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"name\",\"5\":{\"t\":25,\"8\":\"STRING_LITERAL,a\"}}]}}]},{\"t\":37,\"33\":[{\"t\":34,\"26\":\"b\",\"27\":{\"t\":28,\"6\":[{\"t\":39,\"4\":\"name\",\"5\":{\"t\":25,\"8\":\"STRING_LITERAL,b\"}}]}}]},{\"t\":5,\"14\":\"PUNCTUATOR,=\",\"20\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"a\"},\"11\":{\"t\":24,\"3\":\"key\"}},\"21\":{\"t\":24,\"3\":\"b\"}},{\"t\":5,\"14\":\"PUNCTUATOR,=\",\"20\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"b\"},\"11\":{\"t\":24,\"3\":\"key\"}},\"21\":{\"t\":24,\"3\":\"a\"}},{\"t\":36,\"32\":{\"t\":25,\"8\":\"NULL,null\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+    
+    [ex execute:prog];
+    [ex invoke:@"test" with:nil];
+    printf("Test 35 passed.\n");
+    return true;
+}
+
 int main(int argc, char *argv[]) {
     @autoreleasepool {
-        
         if (!test1()) return -1;
         if (!test2()) return -1;
         if (!test3()) return -1;
@@ -865,6 +876,7 @@ int main(int argc, char *argv[]) {
         if (!test32()) return -1;
         if (!test33()) return -1;
         if (!test34()) return -1;
+        if (!test35()) return -1;
     }
     //printf("%d\n", release_count);
     return 0;

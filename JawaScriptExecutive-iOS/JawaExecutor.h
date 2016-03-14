@@ -19,13 +19,14 @@ extern int release_count;
 @interface JawaExecutor : NSObject
 {
     JawaObjectRef* NULL_CONSTANT;
-   }
+}
 
 @property (weak) NSMutableDictionary* env;
 @property NSMutableDictionary* global;
 @property NSMutableArray* activations;
 @property NSMutableArray* currentActivation;
 @property NSMutableDictionary* currentIterationScope;
+@property NSMutableArray* jawaObjectPool;
 @property BOOL isFromCallExpression;
 @property id<JawaExternalCallback> externalCallback;
 

@@ -13,8 +13,8 @@
 #import "JawaNumber.h"
 #import "JawaObjectRef.h"
 
-NSMutableArray* jawaObjectPool;
 int release_count;
+int obj_count;
 
 @implementation JawaObjectRef
 
@@ -23,7 +23,9 @@ int release_count;
     if (self) {
         _object = NULL;
         _executor = ex;
-        [jawaObjectPool addObject:self];
+        _obj_id = obj_count++;
+        //printf("%d : null\n", _obj_id);
+        [ex.jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -33,7 +35,9 @@ int release_count;
     if (self) {
         _object = [[JawaNumber alloc]init:number];
         _executor = ex;
-        [jawaObjectPool addObject:self];
+        _obj_id = obj_count++;
+        //printf("%d : number(%lf)\n", _obj_id, number);
+        [ex.jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -43,7 +47,9 @@ int release_count;
     if (self) {
         _object = [NSMutableString stringWithString:string];
         _executor = ex;
-        [jawaObjectPool addObject:self];
+        _obj_id = obj_count++;
+        //printf("%d : string(%s)\n", _obj_id, [string cStringUsingEncoding: NSUTF8StringEncoding]);
+        [ex.jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -53,7 +59,9 @@ int release_count;
     if (self) {
         _object = [NSNumber numberWithBool:tf];
         _executor = ex;
-        [jawaObjectPool addObject:self];
+        _obj_id = obj_count++;
+        //printf("%d : bool(%d)\n", _obj_id, tf);
+        [ex.jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -63,7 +71,9 @@ int release_count;
     if (self) {
         _object = array;
         _executor = array.executor;
-        [jawaObjectPool addObject:self];
+        _obj_id = obj_count++;
+        //printf("%d : array\n", _obj_id);
+        [_executor.jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -74,7 +84,9 @@ int release_count;
         _object = func;
         _appliedOn = nil;
         _executor = func.executor;
-        [jawaObjectPool addObject:self];
+        _obj_id = obj_count++;
+        //printf("%d : func(%s)\n", _obj_id, [[func.name description]cStringUsingEncoding:NSUTF8StringEncoding]);
+        [_executor.jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -85,7 +97,9 @@ int release_count;
         _object = func;
         _appliedOn = obj;
         _executor = func.executor;
-        [jawaObjectPool addObject:self];
+        _obj_id = obj_count++;
+        //printf("%d : func(%s)\n", _obj_id, [[func.name description]cStringUsingEncoding:NSUTF8StringEncoding]);
+        [_executor.jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -95,7 +109,9 @@ int release_count;
     if (self) {
         _object = obj;
         _executor = obj.executor;
-        [jawaObjectPool addObject:self];
+        _obj_id = obj_count++;
+        //printf("%d : object\n", _obj_id);
+        [_executor.jawaObjectPool addObject:self];
     }
     return self;
 }
@@ -124,9 +140,10 @@ int release_count;
     } else
         return self.object;
 }
+
 -(void)dealloc {
     release_count++;
-    //printf("Releasing %s\n", [NSStringFromClass([self class]) cStringUsingEncoding:NSUTF8StringEncoding]);
+        //printf("Releasing %s\n", [NSStringFromClass([self class]) cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
 +(id)RefIn:(JawaExecutor *)ex {

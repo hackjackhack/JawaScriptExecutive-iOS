@@ -32,7 +32,7 @@ NSMutableDictionary* builtinFunctions;
         
         NULL_CONSTANT = [JawaObjectRef RefIn:self];
         
-        jawaObjectPool = [[NSMutableArray alloc]init];
+        _jawaObjectPool = [[NSMutableArray alloc]init];
         
         arrayPrototype = [[NSMutableDictionary alloc]init];
         stringPrototype = [[NSMutableDictionary alloc]init];
@@ -205,14 +205,14 @@ NSMutableDictionary* builtinFunctions;
          setObject:n.boolValue ? @"true" : @"false"
          forKey:@"retValue"];
     }
-    //printf("%lu objects are in pool.\n", jawaObjectPool.count);
+    //printf("%lu objects are in pool.\n", _jawaObjectPool.count);
     [self gc];
     
     return retJSON;
 }
 
 -(void)gc {
-    for (JawaObjectRef* obj in jawaObjectPool) {
+    for (JawaObjectRef* obj in _jawaObjectPool) {
         obj.marked = false;
         obj.discovered = false;
     }
@@ -222,12 +222,14 @@ NSMutableDictionary* builtinFunctions;
     }
     
     NSMutableArray *markedObj = [NSMutableArray array];
-    for (JawaObjectRef* obj in jawaObjectPool) {
+    for (JawaObjectRef* obj in _jawaObjectPool) {
         if (obj.marked)
             [markedObj addObject:obj];
+        //else
+        //    printf("Recycled: %d\n", obj.obj_id);
     }
-    //printf("%lu objects recycled.\n", jawaObjectPool.count - markedObj.count);
-    [jawaObjectPool setArray:markedObj];
+    //printf("%lu objects recycled.\n", _jawaObjectPool.count - markedObj.count);
+    [_jawaObjectPool setArray:markedObj];
 }
 
 -(void)markAndTraverse:(JawaObjectRef*)objRef {
@@ -323,6 +325,10 @@ NSMutableDictionary* builtinFunctions;
     }
     return [JawaObjectRef RefWithJawaArray:jawaArr];
 }
+
+//-(void)dealloc {
+//    printf("Executor Recycled:\n");
+//}
 
 -(JawaObjectRef*)evalInExpression:(NSDictionary*)ast {
     NSArray* subExpressions = [ast objectForKey:PR_subExpressions];
