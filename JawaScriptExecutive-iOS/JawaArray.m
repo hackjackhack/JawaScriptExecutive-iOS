@@ -30,7 +30,7 @@
 
 NSMutableDictionary* arrayPrototype;
 
-NSInteger compare(JawaObjectRef* o1, JawaObjectRef* o2, void* context) {
+NSInteger jawa_array_compare(JawaObjectRef* o1, JawaObjectRef* o2, void* context) {
     NSArray* ctxt = (__bridge NSArray*)context;
     JawaExecutor* ex = [ctxt objectAtIndex:0];
     JawaObjectRef* comparator = [ctxt objectAtIndex:1];
