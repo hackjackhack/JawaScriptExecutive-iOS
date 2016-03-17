@@ -182,7 +182,7 @@ NSInteger jawa_array_compare(JawaObjectRef* o1, JawaObjectRef* o2, void* context
             if (compareFunction == nil)
                 compareFunction = [JawaObjectRef RefIn:self.executor];
             NSArray* tempArray = self.elements.allObjects;
-            NSArray* sorted = [tempArray sortedArrayUsingFunction:compare context:(__bridge void * _Nullable)(@[self.executor, compareFunction])];
+            NSArray* sorted = [tempArray sortedArrayUsingFunction:jawa_array_compare context:(__bridge void * _Nullable)(@[self.executor, compareFunction])];
             for (NSUInteger i = 0 ; i < sorted.count ; i++) {
                 [self.elements replacePointerAtIndex:i withPointer:(__bridge void * _Nullable)([sorted objectAtIndex:i])];
             }

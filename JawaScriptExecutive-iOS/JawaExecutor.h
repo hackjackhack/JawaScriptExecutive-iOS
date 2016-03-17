@@ -38,7 +38,7 @@ extern int release_count;
     JawaObjectRef* NULL_CONSTANT;
 }
 
-@property (weak) NSMutableDictionary* env;
+@property (weak) NSDictionary* env;
 @property NSMutableDictionary* global;
 @property NSMutableArray* activations;
 @property NSMutableArray* currentActivation;
@@ -50,7 +50,7 @@ extern int release_count;
 -(id)init;
 -(JawaObjectRef*)evaluate:(NSDictionary*)tree;
 -(void)execute:(NSDictionary*)ast;
--(NSMutableDictionary*) invoke:(NSString*)funcName with:(NSMutableDictionary*)asInput;
+-(NSMutableDictionary*) invoke:(NSString*)funcName with:(NSDictionary*)asInput;
 -(JawaObjectRef*)dispatchBuiltin:(NSString*)funcName;
 -(void)registerExternalCallback:(id<JawaExternalCallback>)cb;
 -(NSInteger)compare:(JawaObjectRef*)o1 and:(JawaObjectRef*)o2 with:(JawaObjectRef*)comparator;

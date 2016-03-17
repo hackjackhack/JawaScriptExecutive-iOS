@@ -180,7 +180,7 @@ NSMutableDictionary* builtinFunctions;
     [self evaluate:ast];
 }
 
--(NSMutableDictionary*)invoke:(NSString *)funcName with:(NSMutableDictionary*)asInput {
+-(NSMutableDictionary*)invoke:(NSString *)funcName with:(NSDictionary*)asInput {
     self.env = asInput;
     JawaObjectRef* func = [self.global objectForKey:funcName];
     JawaFunc* resolvedFunction = (JawaFunc*)func.object;
