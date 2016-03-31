@@ -572,10 +572,14 @@ NSMutableDictionary* builtinFunctions;
                 JawaNumber* l = (JawaNumber*)firstOprnd.object;
                 JawaNumber* r = (JawaNumber*)secondOprnd.object;
                 result = l.doubleValue == r.doubleValue;
-            } else if([firstOprnd.object isKindOfClass:[NSNumber class]] && [secondOprnd.object isKindOfClass:[NSNumber class]]) {
-                NSNumber* l = (NSNumber*)firstOprnd.object;
-                NSNumber* r = (NSNumber*)secondOprnd.object;
-                result = l.boolValue == r.boolValue;
+            } else if([firstOprnd.object isKindOfClass:[NSNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
+                bool l = ((NSNumber*)firstOprnd.object).boolValue;
+                double r = ((JawaNumber*)secondOprnd.object).doubleValue;
+                result = l ? r != 0 : r == 0;
+            } else if([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isKindOfClass:[NSNumber class]]) {
+                double l = ((JawaNumber*)firstOprnd.object).doubleValue;
+                bool r = ((NSNumber*)secondOprnd.object).boolValue;
+                result = r ? l != 0 : l == 0;
             } else if([firstOprnd.object isMemberOfClass:[JawaFunc class]] || [secondOprnd.object isMemberOfClass:[JawaFunc class]] || [firstOprnd.object isMemberOfClass:[JawaArray class]] || [secondOprnd.object isMemberOfClass:[JawaArray class]] || [firstOprnd.object isMemberOfClass:[JawaObject class]] || [secondOprnd.object isMemberOfClass:[JawaObject class]]) {
                 
                 result = firstOprnd.object == secondOprnd.object;
