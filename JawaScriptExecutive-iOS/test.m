@@ -857,6 +857,27 @@ BOOL test35() {
     return true;
 }
 
+BOOL test36() {
+    JawaExecutor* ex = [[JawaExecutor alloc]init];
+    NSString *parsed = @"{\"t\":0,\"0\":[{\"t\":1,\"3\":\"test\",\"23\":[],\"24\":{\"t\":2,\"0\":[{\"t\":37,\"33\":[{\"t\":34,\"26\":\"arr\",\"27\":{\"t\":27,\"7\":[]}}]},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"},{\"t\":25,\"8\":\"BOOLEAN,true\"}]}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,0.0\"},{\"t\":25,\"8\":\"BOOLEAN,true\"}]}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"},{\"t\":25,\"8\":\"BOOLEAN,false\"}]}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"==\"}],\"16\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,0.0\"},{\"t\":25,\"8\":\"BOOLEAN,false\"}]}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"!=\"}],\"16\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"},{\"t\":25,\"8\":\"BOOLEAN,true\"}]}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"!=\"}],\"16\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,0.0\"},{\"t\":25,\"8\":\"BOOLEAN,true\"}]}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"!=\"}],\"16\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,5.0\"},{\"t\":25,\"8\":\"BOOLEAN,false\"}]}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":21,\"2\":{\"t\":26,\"2\":[{\"t\":12,\"15\":[{\"t\":5,\"v\":\"!=\"}],\"16\":[{\"t\":25,\"8\":\"NUMERIC_LITERAL,0.0\"},{\"t\":25,\"8\":\"BOOLEAN,false\"}]}]},\"12\":{\"t\":20,\"10\":{\"t\":24,\"3\":\"arr\"},\"11\":{\"t\":24,\"3\":\"push\"}}},{\"t\":36,\"32\":{\"t\":24,\"3\":\"arr\"}}]}}]}";
+    
+    NSDictionary* prog = jsonToDictionary(parsed);
+
+    [ex execute:prog];
+    NSMutableDictionary* result = [ex invoke:@"test" with:nil];
+    NSString *actual = dictionaryToJSON(result);
+    NSString *answer = @"{\"retType\":\"array\",\"retValue\":[true,false,false,true,false,true,true,false]}";
+    
+    if (![actual isEqualToString:answer]) {
+        printf("Test 36 failed!\n");
+        printf("Expected : %s\n", [answer UTF8String]);
+        printf("Actual : %s\n", [actual UTF8String]);
+        return false;
+    }
+    printf("Test 36 passed.\n");
+    return true;
+}
+
 int main(int argc, char *argv[]) {
     @autoreleasepool {
         if (!test1()) return -1;
@@ -894,6 +915,7 @@ int main(int argc, char *argv[]) {
         if (!test33()) return -1;
         if (!test34()) return -1;
         if (!test35()) return -1;
+        if (!test36()) return -1;
     }
     //printf("%d\n", release_count);
     return 0;
