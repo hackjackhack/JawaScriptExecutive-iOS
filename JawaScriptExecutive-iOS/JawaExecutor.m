@@ -572,6 +572,10 @@ NSMutableDictionary* builtinFunctions;
                 JawaNumber* l = (JawaNumber*)firstOprnd.object;
                 JawaNumber* r = (JawaNumber*)secondOprnd.object;
                 result = l.doubleValue == r.doubleValue;
+            } else if([firstOprnd.object isKindOfClass:[NSNumber class]] && [secondOprnd.object isKindOfClass:[NSNumber class]]) {
+                NSNumber* l = (NSNumber*)firstOprnd.object;
+                NSNumber* r = (NSNumber*)secondOprnd.object;
+                result = l.boolValue == r.boolValue;
             } else if([firstOprnd.object isKindOfClass:[NSNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
                 bool l = ((NSNumber*)firstOprnd.object).boolValue;
                 double r = ((JawaNumber*)secondOprnd.object).doubleValue;
