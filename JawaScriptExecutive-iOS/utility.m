@@ -27,19 +27,25 @@
 #import "utility.h"
 
 NSMutableArray* jsonToArray(NSString* str) {
+    str = [str stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
+    str = [str stringByReplacingOccurrencesOfString:@"\t" withString:@"\\t"];
+    str = [str stringByReplacingOccurrencesOfString:@"\r" withString:@"\\r"];
     NSError *error;
     NSMutableArray * array = [NSJSONSerialization
                               JSONObjectWithData:[str dataUsingEncoding:NSUTF8StringEncoding]
-                              options:kNilOptions
+                              options:NSJSONReadingAllowFragments
                               error:&error];
     return array;
 }
 
 NSMutableDictionary* jsonToDictionary(NSString* str) {
+    str = [str stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
+    str = [str stringByReplacingOccurrencesOfString:@"\t" withString:@"\\t"];
+    str = [str stringByReplacingOccurrencesOfString:@"\r" withString:@"\\r"];
     NSError *error;
     NSMutableDictionary * dict = [NSJSONSerialization
                                   JSONObjectWithData:[str dataUsingEncoding:NSUTF8StringEncoding]
-                                  options:kNilOptions
+                                  options:NSJSONReadingAllowFragments
                                   error:&error];
     return dict;
 }
