@@ -167,7 +167,7 @@ NSMutableDictionary* builtinFunctions;
             if (str.length == 0)
                 return [JawaObjectRef RefWithNumber:0 in:self];
             
-            long v = strtol([str cStringUsingEncoding:NSUTF8StringEncoding], NULL, radix);
+            long long v = strtol([str cStringUsingEncoding:NSUTF8StringEncoding], NULL, radix);
             return [JawaObjectRef RefWithNumber:v in:self];
         }
         default:
@@ -304,7 +304,7 @@ NSMutableDictionary* builtinFunctions;
 -(int)toInteger:(JawaObjectRef*)o {
     if ([o.object isMemberOfClass:[JawaNumber class]]) {
         double d = ((JawaNumber*)o.object).doubleValue;
-        int magnitude = (int)(long)floor(fabs(d));
+        int magnitude = (int)(long long)floor(fabs(d));
         int sign = d >= 0 ? 1 : -1;
         return magnitude * sign;
     }
@@ -682,21 +682,21 @@ NSMutableDictionary* builtinFunctions;
             [NSException raise:@"JawaScript Runtime Exception" format:@"Shift ops cannot have null operands"];
         if ([op isEqualToString:@">>"]) {
             if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
-                long shifted = ((JawaNumber*)firstOprnd.object).longValue;
+                long long shifted = ((JawaNumber*)firstOprnd.object).longlongValue;
                 int shift = ((JawaNumber*)secondOprnd.object).intValue;
                 firstOprnd = [JawaObjectRef RefWithNumber:shifted >> shift in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for shift op"];
         } else if ([op isEqualToString:@"<<"]) {
             if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
-                long shifted = ((JawaNumber*)firstOprnd.object).longValue;
+                long long shifted = ((JawaNumber*)firstOprnd.object).longlongValue;
                 int shift = ((JawaNumber*)secondOprnd.object).intValue;
                 firstOprnd = [JawaObjectRef RefWithNumber:(int)(shifted << shift) in:self];
             } else
                 [NSException raise:@"JawaScript Runtime Exception" format:@"Invalid type for shift op"];
         } else if ([op isEqualToString:@">>>"]) {
             if ([firstOprnd.object isMemberOfClass:[JawaNumber class]] && [secondOprnd.object isMemberOfClass:[JawaNumber class]]) {
-                long shifted = ((JawaNumber*)firstOprnd.object).unsignedLongValue;
+                long long shifted = ((JawaNumber*)firstOprnd.object).unsignedLongLongValue;
                 int shift = ((JawaNumber*)secondOprnd.object).intValue;
                 firstOprnd = [JawaObjectRef RefWithNumber:(((unsigned int)shifted) >> shift) in:self];
             } else
