@@ -83,7 +83,9 @@ NSMutableDictionary* objectPrototype;
         [ret appendString:key];
         [ret appendString:@":"];
         JawaObjectRef* value = [self.properties objectForKey:key];
-        if ([value.object isKindOfClass:[NSString class]]) {
+        if (value == nil)
+            [ret appendString:@"null"];
+        else if ([value.object isKindOfClass:[NSString class]]) {
             [ret appendString:@"'"];
             [ret appendString:[value description]];
             [ret appendString:@"'"];
@@ -107,7 +109,9 @@ NSMutableDictionary* objectPrototype;
         [ret appendString:key];
         [ret appendString:@"\":"];
         JawaObjectRef* value = [self.properties objectForKey:key];
-        if ([value.object isKindOfClass:[NSString class]]) {
+        if (value == nil)
+            [ret appendString:@"null"];
+        else if ([value.object isKindOfClass:[NSString class]]) {
             [ret appendString:@"\""];
             NSString* r = [[value description] stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
             [ret appendString:r];
