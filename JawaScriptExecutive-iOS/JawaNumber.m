@@ -40,7 +40,7 @@
 -(NSString*) description {
     
     if (fabs(self.value-round(self.value)) < QUANTUM) {
-        return [NSString stringWithFormat:@"%ld", (long)self.value];
+        return [NSString stringWithFormat:@"%lld", (long long)self.value];
     }
     return [NSString stringWithFormat:@"%lf", self.value];
 }
