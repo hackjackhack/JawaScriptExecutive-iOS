@@ -167,7 +167,7 @@ NSMutableDictionary* builtinFunctions;
             if (str.length == 0)
                 return [JawaObjectRef RefWithNumber:0 in:self];
             
-            long long v = strtol([str cStringUsingEncoding:NSUTF8StringEncoding], NULL, radix);
+            long long v = strtoll([str cStringUsingEncoding:NSUTF8StringEncoding], NULL, radix);
             return [JawaObjectRef RefWithNumber:v in:self];
         }
         default:
