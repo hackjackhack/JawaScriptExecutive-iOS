@@ -28,8 +28,6 @@
 
 #import "JawaObjectRef.h"
 
-extern NSMutableDictionary* objectPrototype;
-
 @interface JawaObject : NSObject
 {
 

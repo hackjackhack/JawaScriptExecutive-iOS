@@ -28,7 +28,6 @@
 
 #import "JawaExternalCallback.h"
 
-extern NSMutableDictionary* builtinFunctions;
 extern int release_count;
 @class JawaObjectRef;
 
@@ -38,6 +37,10 @@ extern int release_count;
     JawaObjectRef* NULL_CONSTANT;
 }
 
+@property NSMutableDictionary* builtinFunctions;
+@property NSMutableDictionary* arrayPrototype;
+@property NSMutableDictionary* stringPrototype;
+@property NSMutableDictionary* objectPrototype;
 @property (weak) NSDictionary* env;
 @property NSMutableDictionary* global;
 @property NSMutableArray* activations;

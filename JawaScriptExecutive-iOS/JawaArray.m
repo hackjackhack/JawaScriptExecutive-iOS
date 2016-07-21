@@ -28,8 +28,6 @@
 #import "JawaObjectProtected.h"
 #import "JawaNumber.h"
 
-NSMutableDictionary* arrayPrototype;
-
 NSInteger jawa_array_compare(JawaObjectRef* o1, JawaObjectRef* o2, void* context) {
     NSArray* ctxt = (__bridge NSArray*)context;
     JawaExecutor* ex = [ctxt objectAtIndex:0];
@@ -42,7 +40,7 @@ NSInteger jawa_array_compare(JawaObjectRef* o1, JawaObjectRef* o2, void* context
 -(id)initIn:(JawaExecutor *)ex {
     self = [super init];
     if (self) {
-        _prototype = arrayPrototype;
+        _prototype = ex.arrayPrototype;
         _elements = [NSPointerArray weakObjectsPointerArray];
         _executor = ex;
     }

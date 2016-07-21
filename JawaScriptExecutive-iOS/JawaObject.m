@@ -27,15 +27,13 @@
 #import "JawaObject.h"
 #import "JawaFunc.h"
 
-NSMutableDictionary* objectPrototype;
-
 @implementation JawaObject
 
 -(id) initIn:(JawaExecutor *)ex {
     self = [super init];
     if (self) {
         _properties = [NSMapTable strongToWeakObjectsMapTable];
-        _prototype = objectPrototype;
+        _prototype = ex.objectPrototype;
         _executor = ex;
     }
     return self;

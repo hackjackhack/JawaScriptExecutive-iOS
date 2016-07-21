@@ -32,13 +32,17 @@
 #import "JawaNumber.h"
 #import "utility.h"
 
-NSMutableDictionary* builtinFunctions;
+
 
 @implementation JawaExecutor
 
 -(id)init {
     self = [super init];
     if (self) {
+        _builtinFunctions = [[NSMutableDictionary alloc]init];
+        _arrayPrototype = [[NSMutableDictionary alloc]init];
+        _stringPrototype = [[NSMutableDictionary alloc]init];
+        _objectPrototype = [[NSMutableDictionary alloc]init];
         _global = [[NSMutableDictionary alloc]init];
         _activations = [[NSMutableArray alloc]init];
         _currentActivation = [[NSMutableArray alloc]init];
@@ -51,53 +55,48 @@ NSMutableDictionary* builtinFunctions;
         
         _jawaObjectPool = [[NSMutableArray alloc]init];
         
-        arrayPrototype = [[NSMutableDictionary alloc]init];
-        stringPrototype = [[NSMutableDictionary alloc]init];
-        objectPrototype = [[NSMutableDictionary alloc]init];
-        builtinFunctions = [[NSMutableDictionary alloc]init];
-        
         // Built-in functions
-        [self registerBuilitinFunc:builtinFunctions funcName:@"alert" params:@[@"msg"]];
-        [self registerBuilitinFunc:builtinFunctions funcName:@"getenv" params:@[@"varname"]];
-        [self registerBuilitinFunc:builtinFunctions funcName:@"extern" params:@[@"functionName", @"argument"]];
-        [self registerBuilitinFunc:builtinFunctions funcName:@"parseInt" params:@[@"string", @"radix"]];
-        for (NSString* name in builtinFunctions) {
-            JawaFunc* f = [builtinFunctions objectForKey:name];
+        [self registerBuilitinFunc:self.builtinFunctions funcName:@"alert" params:@[@"msg"]];
+        [self registerBuilitinFunc:self.builtinFunctions funcName:@"getenv" params:@[@"varname"]];
+        [self registerBuilitinFunc:self.builtinFunctions funcName:@"extern" params:@[@"functionName", @"argument"]];
+        [self registerBuilitinFunc:self.builtinFunctions funcName:@"parseInt" params:@[@"string", @"radix"]];
+        for (NSString* name in self.builtinFunctions) {
+            JawaFunc* f = [self.builtinFunctions objectForKey:name];
             [self.global setObject:[JawaObjectRef RefWithJawaFunc:f] forKey:name];
         }
         
         // Array prototype
-        [self registerBuilitinProp:arrayPrototype propName:@"length"];
-        [self registerBuilitinFunc:arrayPrototype funcName:@"slice" params:@[@"start", @"end"]];
-        [self registerBuilitinFunc:arrayPrototype funcName:@"join" params:@[@"sep"]];
-        [self registerBuilitinFunc:arrayPrototype funcName:@"pop" params:@[]];
-        [self registerBuilitinFunc:arrayPrototype funcName:@"push" params:@[@"item"]];
-        [self registerBuilitinFunc:arrayPrototype funcName:@"reverse" params:@[]];
-        [self registerBuilitinFunc:arrayPrototype funcName:@"shift" params:@[]];
-        [self registerBuilitinFunc:arrayPrototype funcName:@"sort" params:@[@"compareFunction"]];
-        [self registerBuilitinFunc:arrayPrototype funcName:@"unshift" params:@[@"item"]];
+        [self registerBuilitinProp:self.arrayPrototype propName:@"length"];
+        [self registerBuilitinFunc:self.arrayPrototype funcName:@"slice" params:@[@"start", @"end"]];
+        [self registerBuilitinFunc:self.arrayPrototype funcName:@"join" params:@[@"sep"]];
+        [self registerBuilitinFunc:self.arrayPrototype funcName:@"pop" params:@[]];
+        [self registerBuilitinFunc:self.arrayPrototype funcName:@"push" params:@[@"item"]];
+        [self registerBuilitinFunc:self.arrayPrototype funcName:@"reverse" params:@[]];
+        [self registerBuilitinFunc:self.arrayPrototype funcName:@"shift" params:@[]];
+        [self registerBuilitinFunc:self.arrayPrototype funcName:@"sort" params:@[@"compareFunction"]];
+        [self registerBuilitinFunc:self.arrayPrototype funcName:@"unshift" params:@[@"item"]];
         
         // String prototype
-        [self registerBuilitinFunc:stringPrototype funcName:@"split" params:@[@"delim"]];
-        [self registerBuilitinProp:stringPrototype propName:@"length"];
-        [self registerBuilitinFunc:stringPrototype funcName:@"substring" params:@[@"begin", @"end"]];
-        [self registerBuilitinFunc:stringPrototype funcName:@"toLowerCase" params:@[]];
-        [self registerBuilitinFunc:stringPrototype funcName:@"replace" params:@[@"searchvalue", @"newvalue"]];
-        [self registerBuilitinFunc:stringPrototype funcName:@"charCodeAt" params:@[@"index"]];
-        [self registerBuilitinFunc:stringPrototype funcName:@"indexOf" params:@[@"searchvalue", @"start"]];
-        [self registerBuilitinFunc:stringPrototype funcName:@"lastIndexOf" params:@[@"searchvalue", @"start"]];
-        [self registerBuilitinFunc:stringPrototype funcName:@"trim" params:@[]];
+        [self registerBuilitinFunc:self.stringPrototype funcName:@"split" params:@[@"delim"]];
+        [self registerBuilitinProp:self.stringPrototype propName:@"length"];
+        [self registerBuilitinFunc:self.stringPrototype funcName:@"substring" params:@[@"begin", @"end"]];
+        [self registerBuilitinFunc:self.stringPrototype funcName:@"toLowerCase" params:@[]];
+        [self registerBuilitinFunc:self.stringPrototype funcName:@"replace" params:@[@"searchvalue", @"newvalue"]];
+        [self registerBuilitinFunc:self.stringPrototype funcName:@"charCodeAt" params:@[@"index"]];
+        [self registerBuilitinFunc:self.stringPrototype funcName:@"indexOf" params:@[@"searchvalue", @"start"]];
+        [self registerBuilitinFunc:self.stringPrototype funcName:@"lastIndexOf" params:@[@"searchvalue", @"start"]];
+        [self registerBuilitinFunc:self.stringPrototype funcName:@"trim" params:@[]];
         
         // Object prototype
-        [self registerBuilitinFunc:objectPrototype funcName:@"toJSON" params:@[]];
+        [self registerBuilitinFunc:self.objectPrototype funcName:@"toJSON" params:@[]];
     }
     return self;
 }
 
 -(JawaObjectRef*)dispatchBuiltin:(NSString *)funcName {
-    if ([builtinFunctions objectForKey:funcName] == nil)
+    if ([self.builtinFunctions objectForKey:funcName] == nil)
         [NSException raise:@"JawaScript Runtime Exception" format:@"No method %@().", funcName];
-    NSUInteger funcId = ((JawaFunc*)[builtinFunctions objectForKey:funcName]).switchId;
+    NSUInteger funcId = ((JawaFunc*)[self.builtinFunctions objectForKey:funcName]).switchId;
     switch (funcId) {
         // alert()
         case 0: {
@@ -167,7 +166,7 @@ NSMutableDictionary* builtinFunctions;
             if (str.length == 0)
                 return [JawaObjectRef RefWithNumber:0 in:self];
             
-            long long v = strtol([str cStringUsingEncoding:NSUTF8StringEncoding], NULL, radix);
+            long long v = strtoll([str cStringUsingEncoding:NSUTF8StringEncoding], NULL, radix);
             return [JawaObjectRef RefWithNumber:v in:self];
         }
         default:
@@ -868,7 +867,7 @@ NSMutableDictionary* builtinFunctions;
         }
         return prop;
     } else if ([object.object isKindOfClass:[NSString class]]) {
-        JawaFunc* func = [stringPrototype objectForKey:property];
+        JawaFunc* func = [self.stringPrototype objectForKey:property];
         if (func.isPropertyWrapper)
             return [func apply:object];
         return [JawaObjectRef RefWithJawaFunc:func on:object];
@@ -911,7 +910,7 @@ NSMutableDictionary* builtinFunctions;
             }
             return nil;
         } else {
-            JawaFunc* f = (JawaFunc*)[stringPrototype objectForKey:[property description]];
+            JawaFunc* f = (JawaFunc*)[self.stringPrototype objectForKey:[property description]];
             return [JawaObjectRef RefWithJawaFunc:f];
         }
     } else {

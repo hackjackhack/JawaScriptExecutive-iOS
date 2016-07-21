@@ -30,13 +30,11 @@
 #import "JawaNumber.h"
 
 @class JawaExecutor;
-// TODO: Initialize stringPrototype in Executor initialize()
-NSDictionary* stringPrototype;
 
 JawaObjectRef* dispatchStringBuiltin(NSString* str, NSString* funcName, JawaExecutor *ex) {
-    if ([stringPrototype objectForKey:funcName] == nil)
+    if ([ex.stringPrototype objectForKey:funcName] == nil)
         [NSException raise:@"JawaScript Runtime Exception" format:@"string has no method %@()", funcName];
-    NSUInteger funcId = ((JawaFunc*)[stringPrototype objectForKey:funcName]).switchId;
+    NSUInteger funcId = ((JawaFunc*)[ex.stringPrototype objectForKey:funcName]).switchId;
     switch (funcId) {
         // String.split(delim)
         case 0: {
