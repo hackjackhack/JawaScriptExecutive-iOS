@@ -167,7 +167,7 @@
                 return [JawaObjectRef RefWithNumber:0 in:self];
             
             long long v = strtoll([str cStringUsingEncoding:NSUTF8StringEncoding], NULL, radix);
-            return [JawaObjectRef RefWithNumber:v in:self];
+            return [JawaObjectRef RefWithNumber:v*sign in:self];
         }
         default:
             [NSException raise:@"JawaScript Runtime Exception" format:@"Builtin function not found: %@", funcName];
