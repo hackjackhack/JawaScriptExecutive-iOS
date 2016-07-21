@@ -107,7 +107,7 @@
         [ret appendString:key];
         [ret appendString:@"\":"];
         JawaObjectRef* value = [self.properties objectForKey:key];
-        if (value == nil)
+        if (value == nil || value.object == nil)
             [ret appendString:@"null"];
         else if ([value.object isKindOfClass:[NSString class]]) {
             [ret appendString:@"\""];
