@@ -60,6 +60,8 @@
         [self registerBuilitinFunc:self.builtinFunctions funcName:@"getenv" params:@[@"varname"]];
         [self registerBuilitinFunc:self.builtinFunctions funcName:@"extern" params:@[@"functionName", @"argument"]];
         [self registerBuilitinFunc:self.builtinFunctions funcName:@"parseInt" params:@[@"string", @"radix"]];
+        [self registerBuilitinFunc:self.builtinFunctions funcName:@"isDefined" params:@[@"varname"]];
+        [self registerBuilitinFunc:self.builtinFunctions funcName:@"parseJSON" params:@[@"string"]];
         for (NSString* name in self.builtinFunctions) {
             JawaFunc* f = [self.builtinFunctions objectForKey:name];
             [self.global setObject:[JawaObjectRef RefWithJawaFunc:f] forKey:name];
@@ -168,6 +170,22 @@
             
             long long v = strtoll([str cStringUsingEncoding:NSUTF8StringEncoding], NULL, radix);
             return [JawaObjectRef RefWithNumber:v*sign in:self];
+        }
+        // isDefined(varname)
+        case 4: {
+            NSString* varname = [[[self.currentActivation lastObject]objectForKey:@"varname"]description];
+            // Temporarily switch back to last activation since isDefined
+            // should search activation where it is called.
+            NSMutableArray* oldCurrentActivation = self.currentActivation;
+            self.currentActivation = [self.activations objectAtIndex: self.activations.count - 2];
+            JawaObjectRef* ret = [JawaObjectRef RefWithBoolean:[self searchIdentifier:varname] in:self];
+            self.currentActivation = oldCurrentActivation;
+            return ret;
+        }
+        // parseJSON(string)
+        case 5: {
+            NSString* str = [[[self.currentActivation lastObject]objectForKey:@"string"]description];
+            return [self toJawaObject:jsonToDictionary(str)];
         }
         default:
             [NSException raise:@"JawaScript Runtime Exception" format:@"Builtin function not found: %@", funcName];
@@ -936,7 +954,14 @@
     NSMutableDictionary* scope = [[NSMutableDictionary alloc]init];
     int i = 0;
     for (NSDictionary* argument in arguments) {
-        [scope setValue:[self evaluate:argument] forKey:[resolvedFunction.params objectAtIndex:i]];
+        NSString* paramName = [resolvedFunction.params objectAtIndex:i];
+        JawaObjectRef* evaluated = [self evaluate:argument];
+        if ([resolvedFunction.name isEqualToString:@"isDefined"] &&
+            ((NSNumber*)[argument objectForKey:@"t"]).intValue == IDENTIFIER) {
+            [scope setValue:[JawaObjectRef RefWithString:[argument objectForKey:PR_id] in:self] forKey:paramName];
+        } else {
+            [scope setValue:evaluated forKey:paramName];
+        }
         i++;
     }
     
@@ -1286,19 +1311,21 @@
     return nil;
 }
 
--(JawaObjectRef*)resolveIdentifier:(NSDictionary*)ast {
-    NSString* name = [ast objectForKey:PR_id];
+-(JawaObjectRef*)searchIdentifier:(NSString*)id {
+    // Search in the current activation. Innermost scope first
     for (int i = (int)(self.currentActivation.count)-1 ; i >= 0 ; i--) {
         NSDictionary* scope = [self.currentActivation objectAtIndex:i];
-        JawaObjectRef* ret = [scope objectForKey:name];
+        JawaObjectRef* ret = [scope objectForKey:id];
         if (ret != nil)
             return ret;
     }
-    JawaObjectRef* ret = [self.global objectForKey:name];
-    if (ret != nil)
-        return ret;
-    [NSException raise:@"JawaScript Runtime Exception" format:@"Unresolvable identifier: %@", name];
-    return nil;
+    return [self.global objectForKey:id];
+}
+
+-(JawaObjectRef*)resolveIdentifier:(NSDictionary*)ast {
+    NSString* name = [ast objectForKey:PR_id];
+    JawaObjectRef* ret = [self searchIdentifier:name];
+    return ret;
 }
 
 -(JawaObjectRef*)evalLiteral:(NSDictionary*)ast {
